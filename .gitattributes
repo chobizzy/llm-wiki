@@ -1,0 +1,2 @@
+# Git hooks are sh scripts — must stay LF; CRLF breaks the shebang line on Windows
+_meta/hooks/* text eol=lf

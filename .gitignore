@@ -1,0 +1,9 @@
+# Obsidian per-device state — not knowledge
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache/
+.trash/
+
+# OS noise
+.DS_Store
+Thumbs.db
