@@ -25,9 +25,12 @@ Done and verified:
   batch-plan/ast-extract all correct against the real vault; Claude Code live-loads the
   rewritten skills through the new links.
 
-## Phase 5 (destructive — awaiting owner verdict)
-1. `pip uninstall obsidian-wiki` (removes site-packages pkg + old exe)
-2. Delete `~/.obsidian-wiki/` (legacy config, already migrated)
+## Phase 5 — owner approved 2026-07-13, partially done
+1. ~~Delete `~/.obsidian-wiki/`~~ DONE (legacy config removed).
+2. `pip uninstall obsidian-wiki` — **blocked on elevation**: the old package sits in
+   `C:\Python314` (admin-installed); non-elevated uninstall fails with WinError 5 and
+   pip rolls back (package verified intact). Run once from an **elevated** terminal:
+   `pip uninstall obsidian-wiki -y`. Harmless until then — nothing references it.
 
 ## Loose ends
 - `llm-wiki.exe` was added to **user PATH** (`%APPDATA%\Python\Python314\Scripts`) —
