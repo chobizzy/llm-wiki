@@ -9,7 +9,7 @@ break installed skills.
 ## Install
 
 ```bash
-git clone <this-repo> ~/Projects/llm-wiki
+git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki
 pip install -e ~/Projects/llm-wiki
 llm-wiki setup --vault /path/to/your/vault
 ```
