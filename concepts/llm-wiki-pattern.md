@@ -10,12 +10,12 @@ tier: core
 base_confidence: 0.7
 provenance: {extracted: 0.6, inferred: 0.4, ambiguous: 0.0}
 relationships:
-  - target: "[[obsidian-wiki-framework]]"
+  - target: "[[llm-wiki-framework]]"
     type: related_to
   - target: "[[why-agents-need-a-constitution]]"
     type: related_to
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # LLM Wiki Pattern

@@ -5,7 +5,7 @@ tags: [meta, wiki-ops]
 sources: [owner]
 summary: Plain-English owner's manual — how to feed, ask, check, and fix this vault; what the agents do and what only you can do.
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # Vault Manual
@@ -73,7 +73,8 @@ Every operation ends in one git commit tagged `agent=<agent-name>`. To see histo
 | Symptom | What it means / what to do |
 |---|---|
 | Lint fails, but only on `_inbox/` files | Normal — exempt by the vault's own law. Ignore. |
-| The wiki skills all stop working at once | A Python upgrade broke the skill links. Say: **"re-run the obsidian-wiki link install"** |
+| The wiki skills all stop working at once | The links to the `llm-wiki` repo broke (was the repo moved?). Say: **"re-run llm-wiki setup"** |
+| The `llm-wiki` command itself disappears | A Python upgrade dropped the CLI — the skills are unaffected. Say: **"reinstall the llm-wiki CLI"** (`pip install -e` on the repo) |
 | CLI crashes with strange box characters | Windows console quirk — set `PYTHONUTF8=1` |
 | Two agents seem to conflict | Check [[log]] and `git log` — every change is tagged with who made it |
 | A commit prints "[backup] push to GitHub failed" | You were offline — harmless. The next commit pushes everything. To force it now: `git push` in the vault folder |

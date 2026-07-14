@@ -5,7 +5,7 @@ tags: [meta]
 sources: [owner]
 summary: Constitution of this vault — laws, folder map, operations routing, and the DONE contract for all agents.
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # AGENTS.md — Constitution of This Vault
@@ -56,10 +56,10 @@ Filing rule (walk top-down, first match wins): dated? → `journal/` · one sour
 | Freshness check, index, hot.md refresh | `daily-update` |
 | Health audit / dream cycle | `wiki-lint` (`--consolidate`) |
 | Weave links between pages | `cross-linker` |
-| Mine agent histories | the framework's `*-history-ingest` family (`claude-history-ingest`, `codex-history-ingest`, …) |
+| Mine agent histories | the framework's `*-history-ingest` family (`claude-history-ingest`, `hermes-history-ingest`) |
 | Cross-source insight pages | `wiki-synthesize` |
 
-Config: `~/.obsidian-wiki/config` (see Config Resolution Protocol in `llm-wiki/SKILL.md`). Deterministic gate after write operations: `obsidian-wiki doctor` passes, and `obsidian-wiki lint --json` shows zero fail-level findings (`broken_links`, `missing_frontmatter`) outside `_inbox/`. Findings inside `_inbox/` are exempt: sources are immutable (law 2) and the CLI does not skip that folder.
+Config: `~/.llm-wiki/config` (see Config Resolution Protocol in `llm-wiki/SKILL.md`). Deterministic gate after write operations: `llm-wiki doctor` passes, and `llm-wiki lint --json` shows zero fail-level findings (`broken_links`, `missing_frontmatter`) outside `_inbox/`. Findings inside `_inbox/` are exempt: sources are immutable (law 2) and the CLI does not skip that folder.
 
 ## DONE (an operation is complete ONLY when all six hold)
 

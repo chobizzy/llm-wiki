@@ -6,7 +6,7 @@ sources: [owner]
 summary: The three-layer design of this vault — immutable sources, compiled pages, and the bookkeeping that keeps agents honest.
 lifecycle: draft
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # Architecture
@@ -25,7 +25,7 @@ Walk top-down, first match wins: dated? → `journal/` · one source's summary? 
 
 ## Gotchas the design already absorbs
 
-- `obsidian-wiki lint` does **not** skip `_inbox/` or `_meta/` — so `_meta/` files (including the page templates) carry full frontmatter, and `_inbox/` findings are exempted by law rather than "fixed".
+- `llm-wiki lint` does **not** skip `_inbox/` or `_meta/` — so `_meta/` files (including the page templates) carry full frontmatter, and `_inbox/` findings are exempted by law rather than "fixed".
 - The seven page templates share a literal `{{title}}` placeholder, which lint reports as one warn-level `duplicate_titles` finding. Expected; documented in the README.
 - Wikilinks are scanned in the full text of every file, code fences included — never write a double-bracket link unless that page exists.
 - `_raw/` (the framework default) is intentionally absent: `_inbox/` is the single intake door.

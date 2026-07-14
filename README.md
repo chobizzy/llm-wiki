@@ -6,18 +6,18 @@ sources: [owner]
 summary: Quickstart and tour for this agent-maintained LLM wiki vault template.
 lifecycle: draft
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # LLM Wiki Vault Template
 
-A ready-to-clone skeleton for a **Karpathy-style LLM wiki**: a knowledge base treated like a codebase, where raw sources are immutable input, AI agents are the compiler, and a wiki of small linked pages is the compiled artifact you browse in Obsidian (<https://obsidian.md>). It runs on the [obsidian-wiki](https://pypi.org/project/obsidian-wiki/) skill framework and is governed by a constitution (`AGENTS.md`) that any agent — Claude Code, Hermes, Codex, or others — obeys.
+A ready-to-clone skeleton for a **Karpathy-style LLM wiki**: a knowledge base treated like a codebase, where raw sources are immutable input, AI agents are the compiler, and a wiki of small linked pages is the compiled artifact you browse in Obsidian (<https://obsidian.md>). It runs on the self-owned **llm-wiki** skill framework — a git repo of 32 agent skills plus a stdlib-only CLI — and is governed by a constitution (`AGENTS.md`) that any agent — Claude Code, Hermes, or others — obeys.
 
 ## Quickstart
 
 1. **Use this template** (button above) to create your own repo, then clone it — e.g. to `~/Documents/my-wiki`.
-2. **Install the framework:** `pip install obsidian-wiki`, then `obsidian-wiki setup --vault /path/to/your/clone`.
-   ⚠️ Never run `obsidian-wiki setup --project` pointed at the vault — that mode overwrites `AGENTS.md`/`CLAUDE.md` with the framework's generic bootstrap.
+2. **Install the framework:** clone the `llm-wiki` repo, `pip install -e /path/to/llm-wiki`, then `llm-wiki setup --vault /path/to/your/clone`.
+   Skills are linked from the repo checkout into your agents' skill directories — keep that checkout in place, and re-run `setup` if you move it.
 3. **Open the folder as a vault in Obsidian.** The Templates core plugin is pre-wired to `_meta/templates/` — new note → command palette → *Templates: Insert template*.
 4. **Windows only:** set `PYTHONUTF8=1` in the environment (the CLI's box-drawing output crashes legacy console codepages).
 5. **Optional off-machine backup:** point `origin` at a private remote, then activate the auto-push hook once per clone:
@@ -25,8 +25,8 @@ A ready-to-clone skeleton for a **Karpathy-style LLM wiki**: a knowledge base tr
 6. **Verify:**
 
    ```
-   obsidian-wiki doctor --vault .
-   obsidian-wiki lint . --json
+   llm-wiki doctor --vault .
+   llm-wiki lint . --json
    ```
 
    Expected lint result: zero fail-level findings and exactly **one warning** — `duplicate_titles` for the seven files in `_meta/templates/`, which intentionally share the `{{title}}` placeholder.
@@ -47,4 +47,4 @@ Then drop a PDF or article into `_inbox/` and tell your agent: **"ingest my inbo
 
 ## Credits
 
-The LLM-maintained wiki pattern follows Andrej Karpathy's public writing on treating a personal knowledge base as LLM-compiled code. The skill framework is [ar9av/obsidian-wiki](https://pypi.org/project/obsidian-wiki/). MIT licensed.
+The LLM-maintained wiki pattern follows Andrej Karpathy's public writing on treating a personal knowledge base as LLM-compiled code. The skill framework is `llm-wiki`, a self-owned rewrite that began as the third-party [ar9av/obsidian-wiki](https://pypi.org/project/obsidian-wiki/) package (MIT licensed).

@@ -5,12 +5,12 @@ tags: [meta]
 sources: [system]
 summary: Auto-maintained catalog of every wiki page, grouped by category.
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # Wiki Index
 
-*This index is automatically maintained. Last updated: 2026-07-12T00:00:00Z*
+*This index is automatically maintained. Last updated: 2026-07-14T00:00:00Z*
 
 ## Concepts
 
@@ -18,7 +18,7 @@ updated: 2026-07-12
 
 ## Entities
 
-- [[obsidian-wiki-framework]] — the pip-installable skill framework this vault runs on: 36 skills, CLI gates, shared config ( #tools)
+- [[llm-wiki-framework]] — the self-owned skill framework this vault runs on: 32 git-tracked skills, CLI gates, shared config ( #tools)
 
 ## Skills
 

@@ -13,7 +13,7 @@ relationships:
   - target: "[[llm-wiki-pattern]]"
     type: implements
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-14
 ---
 
 # ingest a source
@@ -25,9 +25,9 @@ Any time `_inbox/` holds something not yet compiled into pages — a PDF, an art
 ## Steps
 
 1. Drop the file into `_inbox/`. Never rename or edit it afterwards (law 2).
-2. Tell your agent: **"ingest my inbox"** (the `wiki-ingest` skill of the [[obsidian-wiki-framework]]).
+2. Tell your agent: **"ingest my inbox"** (the `wiki-ingest` skill of the [[llm-wiki-framework]]).
 3. The agent distills into category pages per the filing rule, updating existing pages instead of duplicating (law 6).
-4. Gates: `obsidian-wiki doctor` passes; `lint --json` shows zero fail-level findings outside `_inbox/`.
+4. Gates: `llm-wiki doctor` passes; `lint --json` shows zero fail-level findings outside `_inbox/`.
 5. Bookkeeping plus one git commit (`wiki(ingest): …`) close the operation.
 
 ## Pitfalls
