@@ -2,7 +2,7 @@
 title: llm-wiki framework
 category: entities
 tags: [tools]
-sources: ["llm-wiki repo (self-owned, git)"]
+sources: ["https://github.com/chobizzy/llm-wiki"]
 summary: The self-owned skill framework this vault runs on — 32 agent skills as git-tracked files, a deterministic stdlib-only CLI (doctor/lint), and a shared config.
 lifecycle: draft
 lifecycle_changed: "2026-07-12"
