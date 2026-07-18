@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -288,6 +289,81 @@ def _required_vault_paths(vault: Path) -> list[Path]:
     ]
 
 
+def _extra_required_files(config: dict[str, str]) -> list[str]:
+    """Vault-relative paths the owner declared mandatory via WIKI_REQUIRED_FILES."""
+    raw = config.get("WIKI_REQUIRED_FILES", "")
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _check_required_files(vault: Path, required: list[str]) -> dict[str, str] | None:
+    """Fail-level check for owner-declared required files (opt-in, so missing = fail)."""
+    if not required:
+        return None
+    missing = [rel for rel in required if not (vault / rel).exists()]
+    if missing:
+        return {
+            "name": "required-files",
+            "status": "fail",
+            "detail": f"missing {len(missing)} required file(s): {', '.join(missing)}",
+            "hint": "restore from git or recreate; declared in WIKI_REQUIRED_FILES",
+        }
+    return {
+        "name": "required-files",
+        "status": "pass",
+        "detail": f"all {len(required)} WIKI_REQUIRED_FILES present",
+        "hint": "",
+    }
+
+
+def _check_git_tree(vault: Path) -> dict[str, str] | None:
+    """Tripwire for uncommitted changes in a git-backed vault.
+
+    Warn, not fail: a dirty tree is expected mid-operation; it only signals
+    trouble when found at session start by an agent that didn't make the
+    changes (the vault constitution's law 9).
+    """
+    if not (vault / ".git").exists():
+        return None
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(vault), "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return {
+            "name": "git-tree",
+            "status": "warn",
+            "detail": f"git status failed: {proc.stderr.strip()[:120]}",
+            "hint": "check the vault's git repository health",
+        }
+    dirty = [line for line in proc.stdout.splitlines() if line.strip()]
+    if not dirty:
+        return {"name": "git-tree", "status": "pass", "detail": "working tree clean", "hint": ""}
+    detail = f"{len(dirty)} uncommitted change(s)"
+    log_path = vault / "log.md"
+    if log_path.is_file():
+        try:
+            entries = [
+                line
+                for line in log_path.read_text(encoding="utf-8").splitlines()
+                if line.startswith("- [")
+            ]
+        except OSError:
+            entries = []
+        if entries:
+            detail += f"; last logged op: {entries[-1][2:150]}"
+    return {
+        "name": "git-tree",
+        "status": "warn",
+        "detail": detail,
+        "hint": "law 9: if you did not make these changes, stop and report to the owner",
+    }
+
+
 def run_doctor(*, vault_override: str | None = None) -> dict[str, object]:
     checks: list[dict[str, str]] = []
 
@@ -392,6 +468,13 @@ def run_doctor(*, vault_override: str | None = None) -> dict[str, object]:
                         detail=f"invalid manifest: {exc}",
                         hint="repair or regenerate .manifest.json",
                     )
+
+            required_check = _check_required_files(vault, _extra_required_files(config))
+            if required_check:
+                checks.append(required_check)
+            git_check = _check_git_tree(vault)
+            if git_check:
+                checks.append(git_check)
         else:
             _doctor_add(
                 checks,

@@ -364,6 +364,12 @@ Append to `log.md`:
 - [TIMESTAMP] LINT issues_found=N orphans=X broken_links=Y stale=Z contradictions=W prov_issues=P missing_summary=S fragmented_clusters=F visibility_issues=V promotion_candidates=C synthesis_gaps=G relationship_issues=R
 ```
 
+If `_meta/trust-ledger.md` exists in the vault, also append the gate outcome:
+```
+- [TIMESTAMP] skill=wiki-lint agent=<agent> gate=pass|fail notes="issues_found=N; fail-level outside _inbox/=M"
+```
+`gate=pass` = zero fail-level findings (`broken_links`, `missing_frontmatter`) outside `_inbox/`. This ledger feeds the graduated-trust pass-rate review.
+
 Offer to fix issues automatically or let the user decide which to address.
 
 ---

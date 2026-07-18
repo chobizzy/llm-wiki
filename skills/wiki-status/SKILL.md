@@ -129,6 +129,10 @@ For Codex history specifically, also compute:
 
 Include this in the Overview section as `Page visibility: N public · M internal · K pii`. Skip the line if all pages are untagged (fully public vault).
 
+**Vault guardrails (before rendering the report):**
+- If `retrieval-ledger.md` exists at the vault root, count its entry lines (`- YYYY-MM-DD: …`) that are not marked `(miss)` and report the count as `N/10` — the vault-freeze unlock counter. Skip if the file is absent.
+- If the vault is git-backed, run `git -C "$OBSIDIAN_VAULT_PATH" status --porcelain`. Clean → report `clean`. Dirty → report `N uncommitted change(s)` plus the last `log.md` entry's operation and agent; if you did not make those changes, flag the law-9 stop-and-report rule in the Summary section.
+
 Present a clear summary:
 
 ```markdown
@@ -140,6 +144,8 @@ Present a clear summary:
 - **Total sources ingested:** 42
 - **Projects tracked:** 6
 - **Last ingest:** 2026-04-06T11:00:00Z
+- **Retrieval ledger:** 3/10 non-miss entries (freeze unlock at 10)  ← only when retrieval-ledger.md exists
+- **Working tree:** clean  ← only for git-backed vaults; if dirty, name the count + last logged op/agent
 - **Staged writes pending:** 4 pages · 2 patches (oldest: 3 days ago)  ← only when WIKI_STAGED_WRITES=true
 
 ## Delta (what's changed since last ingest)

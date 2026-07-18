@@ -29,6 +29,13 @@ You run a lightweight maintenance pass over the wiki: check source freshness, re
 
 Execute the maintenance cycle:
 
+**Step 0: Gate & law-9 tripwire**
+
+Run `llm-wiki doctor` before touching anything.
+
+- `required-files` **fail** → a mandatory vault file (declared in `WIKI_REQUIRED_FILES`) is missing. Stop, report to the owner, and suggest `git checkout -- <file>` to restore it. Do not continue the cycle.
+- `git-tree` **warn** → the tree has uncommitted changes. If you did not make them, another agent may be mid-operation: stop and report to the owner (constitution law 9). The check's detail names the last logged operation and agent to help attribute the changes.
+
 **Step 1: Source freshness check**
 
 Compare each source in `.manifest.json` against its file's modification time. Classify as:
@@ -81,6 +88,12 @@ Append to `$OBSIDIAN_VAULT_PATH/log.md`:
 ```
 - [TIMESTAMP] DAILY-UPDATE fresh=N stale=N missing=N index_added=N hot_refreshed=true|false
 ```
+
+If `$OBSIDIAN_VAULT_PATH/_meta/trust-ledger.md` exists, also append the cycle's outcome there:
+```
+- [TIMESTAMP] skill=daily-update agent=<agent> gate=pass|fail notes="<one-line summary>"
+```
+`gate=pass` means `llm-wiki doctor` passed and the cycle completed with no unresolved FAILs from impl-validator. This ledger feeds the graduated-trust pass-rate review.
 
 **Step 7: Report to user**
 
