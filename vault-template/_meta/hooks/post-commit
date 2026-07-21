@@ -1,0 +1,6 @@
+#!/bin/sh
+# Vault backup: push every commit to the private GitHub remote (origin).
+# A failed push (offline, amend, etc.) is non-fatal - the next successful
+# push carries all accumulated commits. Manual catch-up: git push origin main
+# Activated via: git config core.hooksPath _meta/hooks  (re-run after re-clone)
+git push --quiet origin HEAD 2>/dev/null || echo "[backup] push to GitHub failed (offline?) - will catch up on next commit"
