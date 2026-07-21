@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>llm-wiki — your notes, compiled</title>
+<meta name="description" content="An LLM wiki for Obsidian: a markdown knowledge base your AI agents compile and maintain under written law. 32 skills for Claude Code and Hermes, a zero-dependency Python CLI, and a vault template governed by an 11-law constitution.">
+<link rel="canonical" href="https://chobizzy.github.io/llm-wiki/">
+<meta property="og:title" content="llm-wiki — your notes, compiled">
+<meta property="og:description" content="A markdown knowledge base your AI agents compile and maintain under written law.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chobizzy.github.io/llm-wiki/">
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1a1a18; --muted:#6b6b63; --line:#e3e3dd;
+    --card:#ffffff; --accent:#7c3aed;
+    --code-bg:#f5f4f1; --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.04);
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f0f0e; --fg:#ecece6; --muted:#9a9a90; --line:#2a2a26;
+      --card:#171715; --accent:#a78bfa;
+      --code-bg:#1c1c19; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--fg); font-family:var(--sans);
+    line-height:1.65; font-size:17px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px; margin:0 auto; padding:0 24px}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono); font-size:.88em; background:var(--code-bg);
+       padding:.15em .4em; border-radius:4px}
+  pre{background:var(--code-bg); border:1px solid var(--line); border-radius:10px;
+      padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:14px;
+      line-height:1.6}
+  pre code{background:none; padding:0; font-size:inherit}
+
+  header{padding:80px 0 56px; text-align:center; border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(2.4rem,7vw,3.4rem); margin:0 0 .1em; letter-spacing:-.03em;
+     font-weight:700; font-family:var(--mono)}
+  .tagline{font-size:clamp(1.15rem,3.4vw,1.4rem); color:var(--fg);
+           font-weight:600; margin:0 0 .8em; letter-spacing:-.01em}
+  .lede{color:var(--muted); max-width:60ch; margin:0 auto 2em; font-size:1.03rem}
+  .btns{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+  .btn{display:inline-block; padding:11px 22px; border-radius:8px; font-weight:600;
+       font-size:.95rem; border:1px solid var(--line); background:var(--card);
+       color:var(--fg); transition:transform .12s ease}
+  .btn:hover{text-decoration:none; transform:translateY(-1px)}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .badges{margin-top:26px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
+  .pill{font-family:var(--mono); font-size:12px; color:var(--muted);
+        border:1px solid var(--line); border-radius:999px; padding:4px 11px;
+        background:var(--card)}
+
+  section{padding:56px 0; border-bottom:1px solid var(--line)}
+  h2{font-size:1.5rem; letter-spacing:-.02em; margin:0 0 .5em}
+  p{margin:0 0 1em}
+  .sub{color:var(--muted); margin-bottom:1.8em}
+
+  .layers{display:grid; gap:14px; grid-template-columns:repeat(3,1fr)}
+  @media (max-width:720px){.layers{grid-template-columns:1fr}}
+  .layer{background:var(--card); border:1px solid var(--line); border-radius:12px;
+         padding:20px; box-shadow:var(--shadow)}
+  .layer .n{font-family:var(--mono); font-size:11px; letter-spacing:.09em;
+            text-transform:uppercase; color:var(--accent); font-weight:700;
+            display:block; margin-bottom:8px}
+  .layer p{margin:0; color:var(--muted); font-size:.92rem}
+
+  .tbl-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse; width:100%; font-size:.93rem; min-width:520px}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line);
+        vertical-align:top}
+  th{font-size:.78rem; text-transform:uppercase; letter-spacing:.06em;
+     color:var(--muted); font-weight:600}
+  td:first-child{font-weight:600; white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  .yes{color:var(--accent); font-weight:600}
+
+  ol.laws{margin:0; padding-left:1.3em; color:var(--muted); font-size:.94rem}
+  ol.laws li{margin-bottom:.45em}
+  ol.laws b{color:var(--fg)}
+
+  footer{padding:44px 0 64px; text-align:center; color:var(--muted); font-size:.88rem}
+  footer a{color:var(--muted); text-decoration:underline}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>llm-wiki</h1>
+    <p class="tagline">Your notes, compiled.</p>
+    <p class="lede">
+      A knowledge base your AI agents maintain under written law — not a chatbot,
+      not a vector store. 32 agent skills, a zero-dependency CLI, and a ready-to-copy
+      Obsidian vault governed by a constitution.
+    </p>
+    <div class="btns">
+      <a class="btn primary" href="https://github.com/chobizzy/llm-wiki">View on GitHub</a>
+      <a class="btn" href="https://github.com/chobizzy/llm-wiki#getting-started">Quickstart</a>
+    </div>
+    <div class="badges">
+      <span class="pill">MIT</span>
+      <span class="pill">Python 3.10+</span>
+      <span class="pill">zero dependencies</span>
+      <span class="pill">32 skills</span>
+      <span class="pill">11 laws</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Compile once, not on every question</h2>
+    <p class="sub">
+      Most "chat with your notes" tools retrieve at question time: you ask, a retriever
+      grabs some chunks, a model improvises, and nothing is learned. Ask again tomorrow
+      and the same work happens again.
+    </p>
+    <p>
+      llm-wiki inverts that. Knowledge is compiled <em>once</em>, when a source arrives,
+      into small linked markdown pages you can read yourself. Your sources are the source
+      code. Your agents are the compiler. The wiki is the build artifact — and Obsidian is
+      the IDE you browse it in.
+    </p>
+    <p>
+      The hard part isn't the compiling; it's keeping a compiler honest across many
+      sessions and more than one agent. So the vault ships with a constitution.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Three layers</h2>
+    <p class="sub">Sources stay untouched. The wiki is generated. The schema governs both.</p>
+    <div class="layers">
+      <div class="layer">
+        <span class="n">Layer 1 · Sources</span>
+        <p>PDFs, articles, papers, chat exports, images. Immutable ground truth — agents read them and never write back.</p>
+      </div>
+      <div class="layer">
+        <span class="n">Layer 2 · The Wiki</span>
+        <p>Small linked pages with frontmatter and inline provenance. The compiled artifact you actually browse.</p>
+      </div>
+      <div class="layer">
+        <span class="n">Layer 3 · The Schema</span>
+        <p><code>AGENTS.md</code>, 32 skills, and a CLI gate. How the whole thing stays honest over time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Compared to RAG</h2>
+    <p class="sub">Both answer questions from your documents. They differ in when the work happens, and in what you're left holding.</p>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr><th></th><th>Typical RAG / notes chatbot</th><th>llm-wiki</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Work happens</td><td>At query time, every time</td><td class="yes">Once, at ingest — reused forever</td></tr>
+          <tr><td>You get</td><td>An answer you can't inspect</td><td class="yes">Pages you can read, edit, and diff</td></tr>
+          <tr><td>Storage</td><td>Vector DB, embeddings, an index</td><td class="yes">Plain files in a git repo</td></tr>
+          <tr><td>Duplicates</td><td>Near-duplicate chunks pile up</td><td class="yes">One concept, one page — merged</td></tr>
+          <tr><td>Hallucination</td><td>Invisible, mixed into prose</td><td class="yes">Marked <code>^[inferred]</code></td></tr>
+          <tr><td>Trust</td><td>"The model said so"</td><td class="yes">Deterministic gate must pass</td></tr>
+          <tr><td>Lock-in</td><td>Rebuild when the tool dies</td><td class="yes">It's a folder of markdown</td></tr>
+          <tr><td>API keys</td><td>Required</td><td class="yes">None</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Laws, not tips</h2>
+    <p class="sub">
+      Prompt-time instructions don't survive across sessions, models, or agents. A file in
+      the repo does. Every vault carries an <code>AGENTS.md</code> each skill must read —
+      versioned with your knowledge, and greppable. A sample of the eleven:
+    </p>
+    <ol class="laws">
+      <li><b>Never delete a wiki page.</b> Supersede it, and link the successor.</li>
+      <li><b>Never modify anything in <code>_inbox/</code>.</b> Sources are immutable ground truth.</li>
+      <li><b>Never present a synthesized claim as extracted.</b> Mark it <code>^[inferred]</code> or <code>^[ambiguous]</code>.</li>
+      <li><b>Never create a page for a concept that already has one.</b> Merge instead.</li>
+      <li><b>Never set <code>lifecycle</code> above <code>draft</code> on pages you write.</b> Review is human-only.</li>
+    </ol>
+    <p style="margin-top:1.3em">
+      An operation is done only when six conditions hold — pages, manifest, log, hot list,
+      index, and commit — and then the gate runs: <code>doctor</code> must pass and
+      <code>lint</code> must report zero failures. The agent is explicitly forbidden from
+      declaring done on its own assessment.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Get started</h2>
+    <p class="sub">Python 3.10+, and an agent that reads skills. Nothing else to install.</p>
+<pre><code>git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki
+pip install -e ~/Projects/llm-wiki
+llm-wiki setup --vault /path/to/your/vault</code></pre>
+    <p style="margin-top:1.4em">Then scaffold a vault and drop a paper into <code>_inbox/</code>:</p>
+<pre><code>cp -r ~/Projects/llm-wiki/vault-template ~/Documents/my-wiki
+cd ~/Documents/my-wiki &amp;&amp; git init &amp;&amp; git add -A &amp;&amp; git commit -m "init"
+llm-wiki setup --vault .</code></pre>
+    <p style="margin-top:1.4em">
+      Tell your agent <em>"ingest my inbox"</em> and read the pages it writes.
+      Full documentation lives in the
+      <a href="https://github.com/chobizzy/llm-wiki#readme">README</a>.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      MIT licensed ·
+      <a href="https://github.com/chobizzy/llm-wiki">GitHub</a> ·
+      <a href="https://github.com/chobizzy/llm-wiki/issues">Issues</a> ·
+      built for <a href="https://obsidian.md">Obsidian</a>
+    </p>
+    <p style="margin:0">
+      The LLM-wiki framing follows Andrej Karpathy's writing on treating a knowledge base
+      like compiled code.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

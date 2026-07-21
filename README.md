@@ -30,7 +30,7 @@ A knowledge base your AI agents maintain under written law — not a chatbot, no
 
 1. [About The Project](#about-the-project)
    - [How it works](#how-it-works)
-   - [Why not just RAG?](#why-not-just-rag)
+   - [Compared to RAG](#compared-to-rag)
    - [Built With](#built-with)
 2. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
@@ -88,7 +88,7 @@ categories — merging into pages that already exist rather than piling up dupli
 it inferred, updating the index and the op log, and committing. Re-ingesting an unchanged source
 is a no-op, because every source is content-hashed in `.manifest.json`.
 
-### Why not just RAG?
+### Compared to RAG
 
 |                        | Typical RAG / notes chatbot         | llm-wiki                                              |
 | ---------------------- | ----------------------------------- | ----------------------------------------------------- |
