@@ -6,9 +6,8 @@ planning, AST extraction, linting) plus the installer that links the
 directory and writes ``~/.llm-wiki/config`` so the skills resolve the vault
 from any project.
 
-Unlike the obsidian-wiki package this replaces, skills are linked from the
-repo checkout — never from site-packages — so uninstalling or upgrading the
-Python package cannot break installed skills.
+Skills are linked from the repo checkout — never from site-packages — so
+uninstalling or upgrading the Python package cannot break installed skills.
 """
 
 from __future__ import annotations
@@ -26,9 +25,6 @@ from llm_wiki import __version__
 HOME = Path.home()
 GLOBAL_CONFIG_DIR = HOME / ".llm-wiki"
 GLOBAL_CONFIG = GLOBAL_CONFIG_DIR / "config"
-# Config written by the obsidian-wiki package this project replaces; values are
-# migrated from here on first setup.
-LEGACY_CONFIG = HOME / ".obsidian-wiki" / "config"
 
 
 # ── Data resolution ──────────────────────────────────────────────────────────
@@ -179,8 +175,6 @@ def resolve_vault_path(cli_vault: str | None) -> str:
     if cli_vault:
         return os.path.expanduser(cli_vault)
     existing = _read_config_value("OBSIDIAN_VAULT_PATH")
-    if not existing:
-        existing = _parse_config(LEGACY_CONFIG).get("OBSIDIAN_VAULT_PATH", "")
     if existing and existing != "/path/to/your/vault":
         return existing
     if sys.stdin.isatty():
@@ -197,16 +191,10 @@ def write_config(vault_path: str) -> None:
     """Write ~/.llm-wiki/config, preserving unknown keys.
 
     Existing values are kept (this config carries user-managed keys like
-    OBSIDIAN_SOURCES_DIR); on first run, values are seeded from the legacy
-    ~/.obsidian-wiki/config so migration is automatic.
+    OBSIDIAN_SOURCES_DIR).
     """
     GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     values = _read_config()
-    if not values:
-        values = _parse_config(LEGACY_CONFIG)
-    # Keys owned by the old obsidian-wiki installer are superseded.
-    values.pop("OBSIDIAN_WIKI_REPO", None)
-    values.pop("OBSIDIAN_WIKI_VERSION", None)
     if vault_path:
         values["OBSIDIAN_VAULT_PATH"] = vault_path
     # LLM_WIKI_REPO points at the repo root so skills that reference framework
