@@ -41,7 +41,7 @@ Just ask an agent: **"what do I know about X?"** — it answers from the vault a
 
 ## The weekly check (about 5 minutes)
 
-Recommended: run these manually for the first couple of weeks before putting them on a schedule (graduated trust).
+Recommended: run these manually for the first couple of weeks before putting them on a schedule (graduated trust — skills log their gate outcomes to the [[trust-ledger]]).
 
 1. Say **"run wiki-status"** — shows what's waiting to be ingested.
 2. Say **"run wiki-lint"** — health report: broken links, orphan pages, missing sources. Findings inside `_inbox/` are normal and exempt — ignore them.

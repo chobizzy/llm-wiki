@@ -6,7 +6,7 @@ sources: [owner]
 summary: How the llm-wiki config is resolved, the CLI commands that matter, and the setup facts that keep the skills working.
 lifecycle: draft
 created: 2026-07-12
-updated: 2026-07-14
+updated: 2026-07-21
 ---
 
 # Configuration
@@ -20,7 +20,7 @@ The wiki skills find your vault through the first match of:
 3. The global config at `~/.llm-wiki/config`.
 4. If none exist, the agent runs the `wiki-setup` skill and interviews you.
 
-`llm-wiki setup --vault /path/to/vault` writes the minimal global config (vault path, repo path, version) and links the skills into every detected agent; on first run it migrates values from a legacy `~/.obsidian-wiki/config` if one exists. The config is flat `KEY="value"` lines — the optional keys (sources dir, categories, history paths, staged writes, token thresholds) are documented in the framework's `llm-wiki/SKILL.md`; copy what you need into the config.
+`llm-wiki setup --vault /path/to/vault` writes the minimal global config (vault path, repo path, version) and links the skills into every detected agent. The config is flat `KEY="value"` lines — the optional keys (sources dir, categories, history paths, staged writes, token thresholds) are documented in the framework's `llm-wiki/SKILL.md`; copy what you need into the config.
 
 ## The CLI in one minute
 

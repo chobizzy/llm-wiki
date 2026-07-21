@@ -13,12 +13,12 @@ relationships:
   - target: "[[llm-wiki-pattern]]"
     type: implements
 created: 2026-07-12
-updated: 2026-07-14
+updated: 2026-07-21
 ---
 
 # llm-wiki framework
 
-The engine under this vault: the self-owned `llm-wiki` git repo ships 32 agent skills (ingest, query, lint, synthesize, history mining) plus a deterministic, stdlib-only CLI whose `doctor` and `lint` commands are this vault's DONE gates. It replaced the third-party `obsidian-wiki` pip package (2026-07-13) so the skills are owned files under version control, not artifacts inside site-packages.
+The engine under this vault: the self-owned `llm-wiki` git repo ships 32 agent skills (ingest, query, lint, synthesize, history mining) plus a deterministic, stdlib-only CLI whose `doctor` and `lint` commands are this vault's DONE gates. The skills are owned files under version control — one git-tracked copy linked into agents, never artifacts inside site-packages.
 
 ## What it is
 

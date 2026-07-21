@@ -6,7 +6,7 @@ sources: [owner]
 summary: Quickstart and tour for this agent-maintained LLM wiki vault template.
 lifecycle: draft
 created: 2026-07-12
-updated: 2026-07-14
+updated: 2026-07-21
 ---
 
 # LLM Wiki Vault Template
@@ -15,8 +15,8 @@ A ready-to-clone skeleton for a **Karpathy-style LLM wiki**: a knowledge base tr
 
 ## Quickstart
 
-1. **Use this template** (button above) to create your own repo, then clone it — e.g. to `~/Documents/my-wiki`.
-2. **Install the framework:** clone [llm-wiki](https://github.com/chobizzy/llm-wiki) (private repo), `pip install -e /path/to/llm-wiki`, then `llm-wiki setup --vault /path/to/your/clone`.
+1. **Copy this folder** to where you want your vault — e.g. `cp -r vault-template ~/Documents/my-wiki` — then `git init` it and make the first commit.
+2. **Install the framework:** this folder ships inside the [llm-wiki](https://github.com/chobizzy/llm-wiki) repo. `pip install -e /path/to/llm-wiki`, then `llm-wiki setup --vault /path/to/your/vault`.
    Skills are linked from the repo checkout into your agents' skill directories — keep that checkout in place, and re-run `setup` if you move it.
 3. **Open the folder as a vault in Obsidian.** The Templates core plugin is pre-wired to `_meta/templates/` — new note → command palette → *Templates: Insert template*.
 4. **Windows only:** set `PYTHONUTF8=1` in the environment (the CLI's box-drawing output crashes legacy console codepages).
@@ -47,4 +47,4 @@ Then drop a PDF or article into `_inbox/` and tell your agent: **"ingest my inbo
 
 ## Credits
 
-The LLM-maintained wiki pattern follows Andrej Karpathy's public writing on treating a personal knowledge base as LLM-compiled code. The skill framework is [llm-wiki](https://github.com/chobizzy/llm-wiki), a self-owned rewrite that began as the third-party [ar9av/obsidian-wiki](https://pypi.org/project/obsidian-wiki/) package (MIT licensed).
+The LLM-maintained wiki pattern follows Andrej Karpathy's public writing on treating a personal knowledge base as LLM-compiled code. The skill framework is [llm-wiki](https://github.com/chobizzy/llm-wiki) — this template ships inside it (MIT licensed, see the repo root `LICENSE`).

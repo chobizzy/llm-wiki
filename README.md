@@ -1,10 +1,9 @@
 # llm-wiki
 
-Self-owned LLM wiki skills and helper CLI for an Obsidian knowledge vault.
-Replaces the third-party `obsidian-wiki` pip package: the skills live as real
-files in this repo (`skills/`), and agent installs link to the repo checkout —
-never into site-packages — so a `pip uninstall` or Python upgrade can never
-break installed skills.
+Self-owned LLM wiki skills, helper CLI, and vault template for an Obsidian
+knowledge vault. The skills live as real files in this repo (`skills/`), and
+agent installs link to the repo checkout — never into site-packages — so a
+`pip uninstall` or Python upgrade can never break installed skills.
 
 ## Install
 
@@ -18,11 +17,28 @@ llm-wiki setup --vault /path/to/your/vault
 directory (`~/.claude/skills/`, `~/.hermes/skills/`, …) and writes the global
 config at `~/.llm-wiki/config`.
 
+## Scaffold a new vault
+
+`vault-template/` is a ready-to-copy vault skeleton: the constitution
+(`AGENTS.md`), the seven page categories seeded with demo pages, `_meta/`
+templates and hooks, and human docs. To start a new vault:
+
+```bash
+cp -r vault-template ~/Documents/my-wiki
+cd ~/Documents/my-wiki
+git init && git add -A && git commit -m "init: vault from template"
+llm-wiki setup --vault .
+```
+
+See [vault-template/README.md](vault-template/README.md) for the full
+quickstart and tour.
+
 ## Layout
 
 ```
-llm_wiki/     helper CLI (stdlib-only, zero dependencies)
-skills/       the skill folders — the actual product
+llm_wiki/        helper CLI (stdlib-only, zero dependencies)
+skills/          the skill folders — the actual product
+vault-template/  ready-to-copy Obsidian vault skeleton
 ```
 
 ## CLI
@@ -42,6 +58,4 @@ skills/       the skill folders — the actual product
 | `llm-wiki ast-extract PATH` | code structure (classes/functions/imports), no LLM |
 | `llm-wiki lint [VAULT]` | frontmatter, broken links, duplicates, orphans |
 
-Config lives at `~/.llm-wiki/config` (flat `KEY="value"` lines). On first
-`setup`, values are migrated from a legacy `~/.obsidian-wiki/config` if one
-exists.
+Config lives at `~/.llm-wiki/config` (flat `KEY="value"` lines).

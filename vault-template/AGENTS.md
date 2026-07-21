@@ -5,7 +5,7 @@ tags: [meta]
 sources: [owner]
 summary: Constitution of this vault — laws, folder map, operations routing, and the DONE contract for all agents.
 created: 2026-07-12
-updated: 2026-07-14
+updated: 2026-07-21
 ---
 
 # AGENTS.md — Constitution of This Vault
@@ -24,6 +24,7 @@ This vault is a Karpathy-style LLM wiki: a compiled knowledge base maintained by
 8. Never commit secrets, API keys, tokens, or credentials into the vault.
 9. Never start a write operation when `git status` shows uncommitted changes you did not make. Another agent may be mid-operation: stop and report to the owner.
 10. Never set `lifecycle` above `draft` on pages you write. `reviewed`/`verified` are human-only transitions.
+11. Never stamp a timestamp with a `Z` suffix unless it is true UTC. `log.md` entries and ISO frontmatter timestamps come from a UTC clock (`date -u` or equivalent) — never local time relabeled as Z. Check: a new timestamp must not be in the future relative to `date -u`.
 
 ## FOLDERS
 
@@ -32,7 +33,7 @@ This vault is a Karpathy-style LLM wiki: a compiled knowledge base maintained by
 | `_inbox/` | Owner-dropped source documents (PDFs, articles, exports). THE one intake door. | Read-only. Ingest reads; never moves or edits. |
 | `_staging/` | Review queue (unused unless `WIKI_STAGED_WRITES=true`) | Unused |
 | `_archives/` | Vault snapshots from `wiki-rebuild` | Write-once during rebuild |
-| `_meta/` | `taxonomy.md` tag vocabulary; Bases dashboards; `templates/` page templates (Obsidian core Templates); `hooks/` git hooks | Via `tag-taxonomy` / `wiki-dashboard`; templates read-only at write time |
+| `_meta/` | `taxonomy.md` tag vocabulary; Bases dashboards; `templates/` page templates (Obsidian core Templates); `hooks/` git hooks; `trust-ledger.md` per-skill gate outcomes (graduated trust) | Via `tag-taxonomy` / `wiki-dashboard`; templates read-only at write time; trust ledger append-only after a skill's gate |
 | `docs/` | Repo documentation for humans — not wiki pages | Read-only |
 | `concepts/` | One page per standalone idea, pattern, mental model | Read/write |
 | `entities/` | One page per proper noun: tool, person, org, product | Read/write |
