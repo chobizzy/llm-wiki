@@ -216,6 +216,11 @@ model to estimate.
 | `llm-wiki cache-update VAULT SRC --pages …` | Record an ingest hash in the manifest                         |
 | `llm-wiki cache-hash PATH`                  | SHA-256 of a file or directory                                |
 | `llm-wiki ast-extract PATH`                 | Code structure — classes, functions, imports. No LLM, no calls |
+| `llm-wiki pdf-extract PDF`                  | PDF text layer, OCR'd when needed, cached. Reports which pages still need vision |
+
+`pdf-extract` needs PyMuPDF (`pip install llm-wiki[pdf]`). OCR of image-only pages
+additionally needs Tesseract; the tessdata directory is discovered from
+`TESSDATA_PREFIX` or the standard install paths.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

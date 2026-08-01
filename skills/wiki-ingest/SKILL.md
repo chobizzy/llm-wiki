@@ -96,9 +96,9 @@ This keeps faith with the "immutable raw layer" principle in `llm-wiki/SKILL.md`
 
 ### Step 0: Batch Planning for Large Folders
 
-**GUARD: Only run this step when the source is a directory with more than 20 files.** For single files, small folders, or `_raw/` mode, skip directly to Step 1.
+**GUARD: Run this step whenever the source is a directory.** For a single file or `_raw/` mode, skip directly to Step 1.
 
-When the source is a large directory of docs, plan the parallel dispatch first:
+Ingest cost tracks bytes and page count, not file count — two scanned PDFs can outweigh fifty markdown notes. Don't eyeball the file count; let the planner decide. It returns a single batch for small folders, so running it is always safe:
 
 ```bash
 llm-wiki batch-plan "$OBSIDIAN_VAULT_PATH" <source-dir> --pretty
@@ -126,7 +126,7 @@ This outputs a JSON plan with `batches` (each a list of files + total_bytes + ki
 Read the source(s) the user wants to ingest. In append mode, skip files the manifest says are already ingested and unchanged. Supported formats:
 - Markdown (`.md`) — read directly
 - Text (`.txt`) — read directly
-- PDF (`.pdf`) — use the Read tool with page ranges. For **academic papers** (arXiv/conference), see *Academic papers* below — re-read figure- and equation-dense pages with vision so the architecture diagram, key equations, and results tables aren't lost.
+- PDF (`.pdf`) — **run the PDF text pre-pass below first**, then read only the pages it reports as needing vision. For **academic papers** (arXiv/conference), see *Academic papers* below — re-read figure- and equation-dense pages with vision so the architecture diagram, key equations, and results tables aren't lost.
 - Web clippings — markdown files from Obsidian Web Clipper
 - **Structured data** (`.json`, `.jsonl`, `.csv`, `.tsv`, `.html`) — parse the structure first, then distill the knowledge it carries. See *Unstructured & conversational sources* below.
 - **Chat / conversation exports** — ChatGPT `conversations.json`, Slack/Discord channel JSON, timestamped chat logs, meeting transcripts. See *Unstructured & conversational sources* below.
@@ -169,7 +169,35 @@ When the source is an image, your extraction job is interpretive — you're read
 
 Vision is interpretive by nature, so image-derived pages will skew heavily toward `^[inferred]`. That's expected — the provenance markers exist precisely to surface this. Don't pretend an image's "meaning" was extracted when you really inferred it.
 
-For PDFs that are mostly images (scanned docs, slide decks exported to PDF), use `Read pages: "N"` to pull specific pages and treat each page as an image source.
+For PDFs that are mostly images (scanned docs, slide decks exported to PDF), the pre-pass below tells you which pages have no recoverable text. Use `Read pages: "N"` on exactly those, and treat each as an image source.
+
+### PDF text pre-pass — run for every PDF
+
+Before reading any PDF with the Read tool, pull its text layer locally. This is free, it is cached by content hash, and it tells you precisely which pages need a vision read:
+
+```bash
+llm-wiki pdf-extract "<absolute-path.pdf>" --pretty
+```
+
+The report tells you how to read the document:
+
+| Field | Meaning |
+|---|---|
+| `markdown_path` | extracted text, page-marked with `<!-- page N -->` — read this instead of the PDF |
+| `text_pages` | pages whose text layer was extracted for free |
+| `ocr_pages` | image pages recovered by OCR |
+| `needs_vision` | pages with no recoverable text — **vision-read only these** |
+| `cached` | `true` means this PDF was extracted on an earlier run; no work was redone |
+
+**Read `markdown_path`, then `Read pages: "N"` for each page in `needs_vision` — and nothing else.** A 12-page document whose `needs_vision` is empty costs zero vision reads instead of twelve.
+
+When `ocr_available` is `false` and `needs_vision` covers most of the document, the source is an image-only scan and no OCR backend is installed. Report this to the user once, with the fix — installing Tesseract makes those pages free on the next run, and the cache means only the new pages get processed:
+
+```
+winget install UB-Mannheim.TesseractOCR
+```
+
+If `llm-wiki` is not installed, PyMuPDF is missing, or the command errors, fall back to reading the PDF directly with page ranges. This is an optimisation, not a requirement — never block an ingest on it.
 
 ### Long-PDF preprocessing — PageIndex (optional — requires `PAGEINDEX_REPO` in `.env`)
 
@@ -512,6 +540,7 @@ When ingesting a directory, process sources one at a time but maintain a running
 ## Quality Checklist
 
 After ingesting, verify:
+- [ ] For every PDF source, `llm-wiki pdf-extract` ran first and vision reads were limited to its `needs_vision` pages
 - [ ] Every new page has frontmatter with title, category, tags, sources
 - [ ] Every new page has at least 2 wikilinks to existing pages
 - [ ] No orphaned pages (pages with zero incoming links)

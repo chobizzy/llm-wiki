@@ -659,6 +659,30 @@ def cmd_ast_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pdf_extract(args: argparse.Namespace) -> int:
+    from llm_wiki.pdf_extract import extract_pdf
+    path = Path(args.path).expanduser().resolve()
+    cache_dir = Path(args.cache_dir).expanduser().resolve() if args.cache_dir else None
+    try:
+        result = extract_pdf(
+            path,
+            cache_dir=cache_dir,
+            ocr=not args.no_ocr,
+            dpi=args.dpi,
+            language=args.language,
+            tessdata=args.tessdata,
+            force=args.force,
+        )
+    except (FileNotFoundError, RuntimeError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.pretty:
+        print(json.dumps(result, indent=2))
+    else:
+        print(json.dumps(result))
+    return 0
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     report = run_doctor(vault_override=args.vault)
     if args.json:
@@ -876,6 +900,20 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("path", help="file or directory to extract from")
     ap.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
     ap.set_defaults(func=cmd_ast_extract)
+
+    pe = sub.add_parser(
+        "pdf-extract",
+        help="pull a PDF's text layer locally (OCR when available) so ingest vision-reads only the pages that need it",
+    )
+    pe.add_argument("path", help="PDF file to extract")
+    pe.add_argument("--cache-dir", help="override the cache location (default: ~/.llm-wiki/cache/pdf)")
+    pe.add_argument("--no-ocr", action="store_true", help="skip OCR; report image-only pages as needs_vision")
+    pe.add_argument("--dpi", type=int, default=300, help="OCR render DPI (default: 300)")
+    pe.add_argument("--language", default="eng", help="Tesseract language code (default: eng)")
+    pe.add_argument("--tessdata", help="explicit tessdata directory (default: TESSDATA_PREFIX, then standard install paths)")
+    pe.add_argument("--force", action="store_true", help="re-extract even if a cache entry exists")
+    pe.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pe.set_defaults(func=cmd_pdf_extract)
 
     dr = sub.add_parser(
         "doctor",

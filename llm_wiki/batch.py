@@ -103,13 +103,15 @@ def discover_sources(
     *,
     vault: Path | None = None,
     include_code: bool = False,
-) -> list[dict]:
-    """Walk source_dir and return a list of ingestible file dicts.
+) -> tuple[list[dict], int]:
+    """Walk source_dir and return (ingestible file dicts, skipped binary count).
 
     Each dict: {path, kind, size_bytes}. Code files are excluded by default
-    because wiki-ingest Step 1c handles them via ast-extract separately.
+    because wiki-ingest Step 1c handles them via ast-extract separately, and
+    are not counted as skipped binaries.
     """
     files = []
+    skipped_binary = 0
     for dirpath, dirnames, filenames in os.walk(source_dir):
         dirnames[:] = [
             d for d in dirnames
@@ -119,11 +121,12 @@ def discover_sources(
             p = Path(dirpath) / fn
             kind = _classify(p)
             if kind == "skip":
+                skipped_binary += 1
                 continue
             if kind == "code" and not include_code:
                 continue
             files.append({"path": str(p), "kind": kind, "size_bytes": _file_size(p)})
-    return files
+    return files, skipped_binary
 
 
 # ---------------------------------------------------------------------------
@@ -192,9 +195,10 @@ def plan_batches(
     include_code: bool = False,
 ) -> dict[str, Any]:
     """Discover sources, filter unchanged, and split into batches."""
-    all_files = discover_sources(source_dir, vault=vault, include_code=include_code)
+    all_files, skipped_binary = discover_sources(
+        source_dir, vault=vault, include_code=include_code
+    )
 
-    skipped_binary = 0  # files already excluded by _classify
     skipped_unchanged = 0
 
     to_ingest = all_files

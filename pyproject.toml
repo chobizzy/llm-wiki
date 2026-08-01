@@ -10,6 +10,11 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
+# The CLI itself stays stdlib-only. `pdf-extract` needs PyMuPDF to read a PDF's
+# text layer; OCR of image-only pages additionally needs Tesseract on the system.
+[project.optional-dependencies]
+pdf = ["pymupdf>=1.24"]
+
 [project.scripts]
 llm-wiki = "llm_wiki.cli:main"
 
