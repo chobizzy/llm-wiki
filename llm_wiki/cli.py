@@ -889,7 +889,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     lt = sub.add_parser(
         "lint",
-        help="lint a vault for missing frontmatter, broken links, duplicates, and orphans",
+        help="lint a vault for missing frontmatter, broken links, invalid lifecycle states, duplicates, and orphans",
     )
     lt.add_argument("vault", nargs="?", help="path to the Obsidian vault (defaults to configured OBSIDIAN_VAULT_PATH)")
     lt.add_argument("--json", action="store_true", help="emit machine-readable JSON")

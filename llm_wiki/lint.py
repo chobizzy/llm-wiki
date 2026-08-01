@@ -10,6 +10,7 @@ from typing import Any
 SKIP_DIRS = frozenset("_raw _archived _staging _archives .obsidian".split())
 REQUIRED_FRONTMATTER = ("title", "category", "tags", "sources", "created", "updated")
 RESERVED_PAGE_STEMS = frozenset({"index", "log", "hot", "_insights"})
+VALID_LIFECYCLE = ("draft", "reviewed", "verified", "disputed", "archived")
 
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 _FIELD_RE = re.compile(r"^([A-Za-z_][\w-]*):", re.MULTILINE)
@@ -79,6 +80,7 @@ def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
         "slug": _slug(path.stem),
         "title": values.get("title", "").strip() or path.stem,
         "summary": values.get("summary", "").strip(),
+        "lifecycle": values.get("lifecycle", "").strip(),
         "fields": fields,
         "links": links,
     }
@@ -121,6 +123,15 @@ def lint_vault(vault: Path) -> dict[str, Any]:
         if "summary" not in page["fields"] or not page["summary"]
     ]
 
+    # Pages without a lifecycle field are not flagged here: the field is still
+    # being phased in, and its absence is a missing_frontmatter concern. This
+    # check only rejects values that are not states in the machine at all.
+    invalid_lifecycle = [
+        {"page": page["path"], "value": page["lifecycle"]}
+        for page in pages
+        if page["lifecycle"] and page["lifecycle"] not in VALID_LIFECYCLE
+    ]
+
     orphan_pages = []
     for page in pages:
         if page["slug"] in RESERVED_PAGE_STEMS:
@@ -132,13 +143,14 @@ def lint_vault(vault: Path) -> dict[str, Any]:
     findings = {
         "broken_links": broken_links,
         "missing_frontmatter": missing_frontmatter,
+        "invalid_lifecycle": invalid_lifecycle,
         "duplicate_titles": duplicate_titles,
         "missing_summaries": sorted(missing_summaries),
         "orphan_pages": sorted(orphan_pages),
     }
     counts = {name: len(items) for name, items in findings.items()}
 
-    if counts["broken_links"] or counts["missing_frontmatter"]:
+    if counts["broken_links"] or counts["missing_frontmatter"] or counts["invalid_lifecycle"]:
         status = "fail"
     elif any(counts[name] for name in ("duplicate_titles", "missing_summaries", "orphan_pages")):
         status = "warn"
