@@ -213,7 +213,7 @@ model to estimate.
 | `llm-wiki graph-analyse VAULT`              | God nodes, communities, surprising connections                |
 | `llm-wiki batch-plan VAULT SRC_DIR`         | Split sources into parallel-ingest batches                    |
 | `llm-wiki cache-check VAULT SRC…`           | New / modified / unchanged vs `.manifest.json`                |
-| `llm-wiki cache-update VAULT SRC --pages …` | Record an ingest hash in the manifest                         |
+| `llm-wiki cache-update VAULT SRC --created … --updated …` | Record an ingest hash and its page split in the manifest |
 | `llm-wiki cache-hash PATH`                  | SHA-256 of a file or directory                                |
 | `llm-wiki ast-extract PATH`                 | Code structure — classes, functions, imports. No LLM, no calls |
 | `llm-wiki pdf-extract PDF`                  | PDF text layer, OCR'd when needed, cached. Reports which pages still need vision |

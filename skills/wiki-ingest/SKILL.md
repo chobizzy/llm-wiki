@@ -61,7 +61,7 @@ Output: `{"new": [...], "modified": [...], "unchanged": [...], "missing": [...]}
 After ingesting each source, record its hash:
 
 ```bash
-llm-wiki cache-update "$OBSIDIAN_VAULT_PATH" <source> --pages <page1> [page2 ...]
+llm-wiki cache-update "$OBSIDIAN_VAULT_PATH" <source> --created <page1> [page2 ...] --updated <page3> [...]
 ```
 
 **Fallback** (if `llm-wiki` is not installed): compute hashes manually with `sha256sum -- "<file>"` (Linux) or `shasum -a 256 -- "<file>"` (macOS) and compare against `content_hash` in `.manifest.json`. If the entry has no `content_hash`, fall back to mtime comparison.
@@ -225,62 +225,11 @@ Research papers (arXiv/conference PDFs) carry their substance in figures, equati
 
 See the *Paper Extraction Frame* in `references/ingest-prompts.md` for the reading checklist.
 
-### Step 1b: QMD Source Discovery (optional — requires `QMD_PAPERS_COLLECTION` in `.env`)
+### Step 1b: QMD Source Discovery (optional)
 
-**GUARD: If `$QMD_PAPERS_COLLECTION` is empty or unset, skip this entire step and proceed to Step 2.**
+**GUARD: If `$QMD_PAPERS_COLLECTION` is unset — the default — skip this step and proceed to Step 2.** Use `Grep` in Step 4 to check for existing pages on the same topic instead.
 
-> **No QMD?** Skip this step entirely. Use `Grep` in Step 4 to check for existing pages on the same topic before creating new ones. See `.env.example` for QMD setup instructions.
-
-When `QMD_PAPERS_COLLECTION` is set:
-
-Before extracting knowledge from a document, check whether related papers are already indexed that could enrich the page you're about to write:
-
-Choose the QMD transport from `$QMD_TRANSPORT`:
-
-- `mcp` (default): use the QMD MCP tool configured in the agent.
-- `cli`: run the local qmd CLI. Use `$QMD_CLI` if set; otherwise use `qmd`.
-
-If the selected transport is unavailable (no MCP tool, `qmd` not on PATH, or the command errors), skip QMD and continue with Step 2.
-
-For MCP transport:
-
-```
-mcp__qmd__query:
-  collection: <QMD_PAPERS_COLLECTION>   # e.g. "papers"
-  intent: <what this document is about>
-  searches:
-    - type: vec    # semantic — finds papers on the same topic even with different vocabulary
-      query: <topic or thesis of the source being ingested>
-    - type: lex    # keyword — finds papers citing the same methods, tools, or authors
-      query: <key terms, author names, method names from the source>
-```
-
-For CLI transport, pick the command from `$QMD_CLI_SEARCH_MODE`:
-
-- `quality` (default): best relevance; slower on CPU.
-  ```bash
-  ${QMD_CLI:-qmd} query $'vec: <topic or thesis of the source>\nlex: <key terms, author names, method names>' -c "$QMD_PAPERS_COLLECTION" -n 8 --files
-  ```
-- `balanced`: hybrid search without LLM reranking; use when `quality` is too slow.
-  ```bash
-  ${QMD_CLI:-qmd} query $'vec: <topic or thesis of the source>\nlex: <key terms, author names, method names>' -c "$QMD_PAPERS_COLLECTION" -n 8 --no-rerank --files
-  ```
-- `fast`: semantic-only source discovery.
-  ```bash
-  ${QMD_CLI:-qmd} vsearch "<topic or thesis of the source>" -c "$QMD_PAPERS_COLLECTION" -n 8 --files
-  ```
-
-Use `${QMD_CLI:-qmd} get "#docid"` to retrieve a ranked source by docid when CLI output provides one.
-
-Use the returned snippets to:
-1. **Surface related papers** you may not have thought to link — add them as cross-references in the wiki page
-2. **Identify recurring themes** across the corpus — these deserve their own concept pages
-3. **Find contradictions** between this source and indexed papers — flag with `^[ambiguous]`
-4. **Avoid duplicate pages** — if the corpus already covers this concept heavily, merge rather than create
-
-If the QMD results show that 3+ papers touch the same concept, that concept almost certainly warrants a global `concepts/` page.
-
-**Skip this step** if `QMD_PAPERS_COLLECTION` is not set.
+When it is set, **read `references/qmd-search.md` and follow the *Source discovery* section** to find already-indexed papers that should be cross-linked from the page you're about to write.
 
 
 ### Step 1c: Code Source Detection (free local extraction — no LLM)
@@ -453,24 +402,17 @@ After writing pages, check that wikilinks work in both directions. If page A lin
 
 ### Step 7: Update Manifest and Special Files
 
-**`.manifest.json`** — For each source file ingested, add or update its entry:
-```json
-{
-  "ingested_at": "TIMESTAMP",
-  "size_bytes": FILE_SIZE,
-  "modified_at": FILE_MTIME,
-  "content_hash": "sha256:<64-char-hex>",
-  "source_type": "document",  // or "image" for png/jpg/webp/gif and image-only PDFs; "data" for chat/log/CSV/JSON sources
-  "project": "project-name-or-null",
-  "pages_created": ["list/of/pages.md"],
-  "pages_updated": ["list/of/pages.md"]
-}
+**`.manifest.json`** — Record every source you ingested with the CLI. Do not hand-write this file: the command hashes the source, stamps a UTC timestamp, and normalises the key to an absolute path, which is what DONE criterion 2 requires.
+
+```bash
+llm-wiki cache-update "$OBSIDIAN_VAULT_PATH" <source> \
+  --created <page1> [page2 ...] \
+  --updated <page3> [page4 ...]
 ```
-`content_hash` is the SHA-256 of the file contents at ingest time. Always write it — it's the primary skip signal on subsequent runs.
 
-Also update `stats.total_sources_ingested` and `stats.total_pages`.
+Pass vault-relative page paths. Give `--created` the pages this ingest brought into existence and `--updated` the ones it merged into — the same split you report in `log.md`. Pass an empty list (`--created` with no values) when a side is empty. The command creates the manifest if it doesn't exist and leaves unrelated top-level keys untouched.
 
-If the manifest doesn't exist yet, create it with `version: 1`.
+**Fallback** (if `llm-wiki` is not installed): write the entry by hand under `sources`, keyed by the source's absolute path, with `content_hash` (SHA-256 of the file contents), `last_ingested` (ISO-8601 UTC), `pages_created`, and `pages_updated`. `content_hash` is the primary skip signal on subsequent runs — never omit it.
 
 **`index.md`** — Add entries for any new pages, update summaries for modified pages.
 
@@ -495,43 +437,11 @@ updated: TIMESTAMP
 ## Flagged Contradictions
 ```
 
-### Step 8: Refresh QMD Wiki Index (optional — requires `QMD_WIKI_COLLECTION`)
+### Step 8: Refresh the QMD Index (optional)
 
-**GUARD: If `$QMD_WIKI_COLLECTION` is empty or unset, skip this step.** The markdown vault is still the source of truth; QMD is a search index.
+**GUARD: If `$QMD_WIKI_COLLECTION` is unset — the default — skip this step.** The vault is the source of truth; QMD is only an index over it.
 
-Run this step only after pages and special files have been written. If the source was skipped because manifest hash matched, do not refresh QMD.
-
-This refresh currently requires the local QMD CLI. Use `$QMD_CLI` if set; otherwise use `qmd`. If the CLI is unavailable or returns an error, do not roll back the wiki ingest; report that the wiki was updated but QMD refresh was skipped or failed.
-
-For CLI refresh:
-
-```bash
-${QMD_CLI:-qmd} update
-```
-
-If the output says new hashes need vectors, or if pages were created/updated and embeddings may be stale, run:
-
-```bash
-${QMD_CLI:-qmd} embed
-```
-
-Verify at least one created or materially updated page is visible in the wiki collection:
-
-```bash
-${QMD_CLI:-qmd} get "qmd://$QMD_WIKI_COLLECTION/projects/<project>/<category>/<page>.md" -l 5
-```
-
-If the exact `qmd://` path is uncertain, use:
-
-```bash
-${QMD_CLI:-qmd} ls "$QMD_WIKI_COLLECTION" | grep "<page-slug>"
-```
-
-Record QMD refresh in the final report as one of:
-- `QMD refreshed: update + embed + verified`
-- `QMD skipped: QMD_WIKI_COLLECTION unset`
-- `QMD skipped: qmd CLI unavailable`
-- `QMD failed: <short error summary>`
+When it is set, **read `references/qmd-search.md` and follow the *Index refresh* section.** Never roll back a completed ingest because an index refresh failed.
 
 ## Handling Multiple Sources
 
@@ -550,10 +460,15 @@ After ingesting, verify:
 - [ ] Inferred and ambiguous claims are marked with `^[inferred]` / `^[ambiguous]`; `provenance:` frontmatter block is present on new and updated pages
 - [ ] Every new/updated page has a `summary:` frontmatter field (1–2 sentences, ≤200 chars)
 - [ ] `relationships:` block is present on pages where source text made typed connections clear; all entries use an allowed type from `llm-wiki/SKILL.md`
-- [ ] If `QMD_WIKI_COLLECTION` is set and the QMD CLI is available, `qmd update` has run after writing pages
-- [ ] If QMD reports missing vectors or embeddings may be stale, `qmd embed` has run
-- [ ] QMD refresh status is included in the final report
+- [ ] If `QMD_WIKI_COLLECTION` is set, the index refresh in `references/qmd-search.md` has run and its status is in the final report
 
 ## Reference
 
-Read `references/ingest-prompts.md` for the LLM prompt templates used during extraction.
+Read these when the step that cites them applies — not up front:
+
+| File | Read it when |
+|---|---|
+| `references/ingest-prompts.md` | Extracting (Step 2) — LLM prompt templates, including the Paper Extraction Frame |
+| `references/url-sources.md` | The source is a web URL |
+| `references/pageindex.md` | The source is a long text PDF and `PAGEINDEX_REPO` is set |
+| `references/qmd-search.md` | `QMD_PAPERS_COLLECTION` or `QMD_WIKI_COLLECTION` is set |

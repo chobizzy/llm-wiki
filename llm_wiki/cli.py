@@ -628,8 +628,12 @@ def cmd_cache_update(args: argparse.Namespace) -> int:
     from llm_wiki.cache import update_source
     vault = Path(args.vault).expanduser().resolve()
     source = Path(args.source).expanduser().resolve()
-    pages = args.pages or []
-    h = update_source(vault, source, pages_produced=pages)
+    h = update_source(
+        vault,
+        source,
+        pages_created=args.created or [],
+        pages_updated=args.updated or [],
+    )
     print(json.dumps({"path": str(source), "content_hash": h}))
     return 0
 
@@ -883,7 +887,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     cu.add_argument("vault", help="path to the Obsidian vault")
     cu.add_argument("source", help="source file or directory that was just ingested")
-    cu.add_argument("--pages", nargs="*", metavar="PAGE", help="vault-relative paths of pages produced")
+    cu.add_argument("--created", nargs="*", metavar="PAGE", help="vault-relative paths of pages this ingest created")
+    cu.add_argument("--updated", nargs="*", metavar="PAGE", help="vault-relative paths of pages this ingest updated")
     cu.set_defaults(func=cmd_cache_update)
 
     ch = sub.add_parser(

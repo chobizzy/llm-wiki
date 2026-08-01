@@ -190,19 +190,26 @@ class QuietNativeStdoutTests(unittest.TestCase):
     def test_fd_writes_are_diverted_then_stdout_is_restored(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             capture = Path(tmp) / "stdout.txt"
-            with open(capture, "w", encoding="utf-8") as fh:
-                saved = os.dup(1)
+            sink = Path(tmp) / "stderr.txt"
+            with open(capture, "w", encoding="utf-8") as fh, open(sink, "w", encoding="utf-8") as err:
+                saved_out, saved_err = os.dup(1), os.dup(2)
                 os.dup2(fh.fileno(), 1)
+                os.dup2(err.fileno(), 2)
                 try:
                     with quiet_native_stdout():
                         os.write(1, b"NOISE\n")
                     os.write(1, b"JSON\n")
                 finally:
-                    os.dup2(saved, 1)
-                    os.close(saved)
+                    os.dup2(saved_out, 1)
+                    os.dup2(saved_err, 2)
+                    os.close(saved_out)
+                    os.close(saved_err)
             written = capture.read_text(encoding="utf-8")
+            diverted = sink.read_text(encoding="utf-8")
         self.assertNotIn("NOISE", written)
         self.assertIn("JSON", written)
+        # Diagnostics must survive the diversion, not be discarded.
+        self.assertIn("NOISE", diverted)
 
 
 class MissingSourceTests(unittest.TestCase):

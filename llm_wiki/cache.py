@@ -4,16 +4,23 @@ Provides a reliable, platform-independent alternative to running `sha256sum`
 in the skill. The agent calls `llm-wiki cache-check` / `cache-update`
 instead of shelling out to sha256sum and manually parsing .manifest.json.
 
-Manifest format (.manifest.json in the vault root):
+Manifest format (.manifest.json in the vault root). Keys are absolute
+expanded paths and the created/updated split is required by DONE criterion 2
+of the vault constitution (AGENTS.md):
 {
   "sources": {
-    "<abs-or-rel-path>": {
+    "<abs-path>": {
       "content_hash": "<sha256-hex>",
       "last_ingested": "<ISO-8601>",
-      "pages_produced": ["<vault-relative-page-path>", ...]
+      "pages_created": ["<vault-relative-page-path>", ...],
+      "pages_updated": ["<vault-relative-page-path>", ...]
     }
   }
 }
+
+Entries written before the split carry a single `pages_produced` list. They
+are read as-is and migrated to the two-list form the next time their source
+is re-ingested.
 """
 
 from __future__ import annotations
@@ -29,7 +36,9 @@ from typing import TypedDict
 class SourceEntry(TypedDict, total=False):
     content_hash: str
     last_ingested: str
-    pages_produced: list[str]
+    pages_created: list[str]
+    pages_updated: list[str]
+    pages_produced: list[str]  # legacy single-list form, read-only
 
 
 class CheckResult(TypedDict):
@@ -130,17 +139,30 @@ def update_source(
     vault: Path,
     source_path: Path,
     *,
-    pages_produced: list[str] | None = None,
+    pages_created: list[str] | None = None,
+    pages_updated: list[str] | None = None,
 ) -> str:
-    """Record the current hash of *source_path* in the manifest. Returns the hash."""
+    """Record the current hash of *source_path* in the manifest. Returns the hash.
+
+    Keys are normalised to absolute paths so a source recorded from one working
+    directory is still recognised from another.
+    """
     sources = _load_manifest(vault)
-    key = str(source_path)
+    key = os.path.abspath(source_path)
     current_hash = compute_hash(source_path)
-    entry: SourceEntry = sources.get(key, {})
+
+    entry: SourceEntry = sources.pop(key, None) or sources.pop(str(source_path), None) or {}
     entry["content_hash"] = current_hash
     entry["last_ingested"] = datetime.now(timezone.utc).isoformat()
-    if pages_produced is not None:
-        entry["pages_produced"] = pages_produced
+    if pages_created is not None:
+        entry["pages_created"] = pages_created
+    if pages_updated is not None:
+        entry["pages_updated"] = pages_updated
+    if (pages_created is not None or pages_updated is not None):
+        # The two-list form supersedes the legacy single list; keeping both
+        # would leave two disagreeing records of the same ingest.
+        entry.pop("pages_produced", None)
+
     sources[key] = entry
     _save_manifest(vault, sources)
     return current_hash
