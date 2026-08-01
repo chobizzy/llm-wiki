@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,234 +10,962 @@
 <meta property="og:description" content="A markdown knowledge base your AI agents compile and maintain under written law.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://chobizzy.github.io/llm-wiki/">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
-  :root{
-    --bg:#fbfbfa; --fg:#1a1a18; --muted:#6b6b63; --line:#e3e3dd;
-    --card:#ffffff; --accent:#7c3aed;
-    --code-bg:#f5f4f1; --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.04);
-    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  :root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Dark Mode Theme */
+    --bg: #050508;
+    --bg-surface: #0e0e14;
+    --card-bg: rgba(20, 20, 28, 0.7);
+    --border: rgba(255, 255, 255, 0.1);
+    --border-hover: rgba(168, 85, 247, 0.4);
+    --fg: #f4f4f6;
+    --muted: #9999a6;
+    
+    /* Clean Obsidian Purple Accent */
+    --accent-gradient: linear-gradient(135deg, var(--fg) 30%, #c084fc 100%);
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+    --emerald: #10b981;
+
+    --code-bg: #0a0a0f;
   }
-  @media (prefers-color-scheme:dark){
-    :root{
-      --bg:#0f0f0e; --fg:#ecece6; --muted:#9a9a90; --line:#2a2a26;
-      --card:#171715; --accent:#a78bfa;
-      --code-bg:#1c1c19; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
-    }
+
+  [data-theme="light"] {
+    --bg: #f8f8fc;
+    --bg-surface: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --border: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(126, 34, 206, 0.4);
+    --fg: #09090e;
+    --muted: #666675;
+
+    --accent-gradient: linear-gradient(135deg, var(--fg) 30%, #7e22ce 100%);
+    --purple: #7e22ce;
+    --cyan: #0e7490;
+    --emerald: #047857;
+
+    --code-bg: #f0f0f5;
   }
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{
-    margin:0; background:var(--bg); color:var(--fg); font-family:var(--sans);
-    line-height:1.65; font-size:17px; -webkit-font-smoothing:antialiased;
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  .wrap{max-width:860px; margin:0 auto; padding:0 24px}
-  a{color:var(--accent); text-decoration:none}
-  a:hover{text-decoration:underline}
-  code{font-family:var(--mono); font-size:.88em; background:var(--code-bg);
-       padding:.15em .4em; border-radius:4px}
-  pre{background:var(--code-bg); border:1px solid var(--line); border-radius:10px;
-      padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:14px;
-      line-height:1.6}
-  pre code{background:none; padding:0; font-size:inherit}
 
-  header{padding:80px 0 56px; text-align:center; border-bottom:1px solid var(--line)}
-  h1{font-size:clamp(2.4rem,7vw,3.4rem); margin:0 0 .1em; letter-spacing:-.03em;
-     font-weight:700; font-family:var(--mono)}
-  .tagline{font-size:clamp(1.15rem,3.4vw,1.4rem); color:var(--fg);
-           font-weight:600; margin:0 0 .8em; letter-spacing:-.01em}
-  .lede{color:var(--muted); max-width:60ch; margin:0 auto 2em; font-size:1.03rem}
-  .btns{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
-  .btn{display:inline-block; padding:11px 22px; border-radius:8px; font-weight:600;
-       font-size:.95rem; border:1px solid var(--line); background:var(--card);
-       color:var(--fg); transition:transform .12s ease}
-  .btn:hover{text-decoration:none; transform:translateY(-1px)}
-  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
-  .badges{margin-top:26px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
-  .pill{font-family:var(--mono); font-size:12px; color:var(--muted);
-        border:1px solid var(--line); border-radius:999px; padding:4px 11px;
-        background:var(--card)}
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
 
-  section{padding:56px 0; border-bottom:1px solid var(--line)}
-  h2{font-size:1.5rem; letter-spacing:-.02em; margin:0 0 .5em}
-  p{margin:0 0 1em}
-  .sub{color:var(--muted); margin-bottom:1.8em}
+  a { color: var(--fg); text-decoration: none; }
 
-  .layers{display:grid; gap:14px; grid-template-columns:repeat(3,1fr)}
-  @media (max-width:720px){.layers{grid-template-columns:1fr}}
-  .layer{background:var(--card); border:1px solid var(--line); border-radius:12px;
-         padding:20px; box-shadow:var(--shadow)}
-  .layer .n{font-family:var(--mono); font-size:11px; letter-spacing:.09em;
-            text-transform:uppercase; color:var(--accent); font-weight:700;
-            display:block; margin-bottom:8px}
-  .layer p{margin:0; color:var(--muted); font-size:.92rem}
+  /* Floating Capsule Navbar */
+  .nav-capsule-wrapper {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px;
+  }
+  .nav-capsule {
+    width: 100%;
+    max-width: 960px;
+    background: rgba(10, 10, 15, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+  [data-theme="light"] .nav-capsule {
+    background: rgba(255, 255, 255, 0.85);
+  }
+  .brand {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--purple);
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .nav-links a {
+    color: var(--muted);
+    transition: color 0.2s ease;
+  }
+  .nav-links a:hover { color: var(--fg); }
+  
+  .btn-pill-cta {
+    background: var(--fg);
+    color: var(--bg);
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 8px 18px;
+    border-radius: 999px;
+    transition: all 0.25s ease;
+    border: 1px solid var(--fg);
+  }
+  .btn-pill-cta:hover {
+    background: transparent;
+    color: var(--fg);
+  }
 
-  .tbl-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
-  table{border-collapse:collapse; width:100%; font-size:.93rem; min-width:520px}
-  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line);
-        vertical-align:top}
-  th{font-size:.78rem; text-transform:uppercase; letter-spacing:.06em;
-     color:var(--muted); font-weight:600}
-  td:first-child{font-weight:600; white-space:nowrap}
-  tbody tr:last-child td{border-bottom:none}
-  .yes{color:var(--accent); font-weight:600}
+  .theme-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .theme-btn:hover { border-color: var(--fg); color: var(--fg); }
 
-  ol.laws{margin:0; padding-left:1.3em; color:var(--muted); font-size:.94rem}
-  ol.laws li{margin-bottom:.45em}
-  ol.laws b{color:var(--fg)}
+  /* Hero Section */
+  header {
+    padding: 160px 0 90px;
+    text-align: center;
+    position: relative;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .hero-badge span {
+    color: var(--purple);
+    font-weight: 700;
+  }
+  
+  h1 {
+    font-size: clamp(3rem, 7vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    margin-bottom: 24px;
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .text-accent {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 
-  footer{padding:44px 0 64px; text-align:center; color:var(--muted); font-size:.88rem}
-  footer a{color:var(--muted); text-decoration:underline}
+  .hero-lede {
+    font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+    color: var(--muted);
+    max-width: 680px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .btn-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn-filled {
+    background: var(--fg);
+    color: var(--bg);
+    border: 1px solid var(--fg);
+  }
+  .btn-filled:hover {
+    transform: translateY(-2px);
+    background: transparent;
+    color: var(--fg);
+  }
+  .btn-outline {
+    border: 1px solid var(--border);
+    color: var(--fg);
+    background: var(--card-bg);
+  }
+  .btn-outline:hover {
+    border-color: var(--fg);
+    transform: translateY(-2px);
+  }
+
+  /* Command Terminal Hero Card */
+  .hero-terminal {
+    max-width: 680px;
+    margin: 0 auto;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px 24px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.3s ease;
+  }
+  .hero-terminal:hover {
+    border-color: var(--border-hover);
+  }
+  .copy-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .copy-btn:hover { background: var(--fg); color: var(--bg); }
+
+  /* Sections General */
+  section {
+    padding: 100px 0;
+    border-top: 1px solid var(--border);
+  }
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--purple);
+    margin-bottom: 12px;
+    display: block;
+    font-weight: 600;
+  }
+  .section-h2 {
+    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .section-sub {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 620px;
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+
+  /* Creative Agency Sticky Split Services / Layers */
+  .sticky-split {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 48px;
+  }
+  @media (max-width: 900px) {
+    .sticky-split { grid-template-columns: 1fr; }
+  }
+  .sticky-left {
+    position: sticky;
+    top: 120px;
+    height: fit-content;
+  }
+  .cards-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .agency-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 36px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .agency-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-4px);
+  }
+  .agency-card-num {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--purple);
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .agency-card h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  .agency-card p {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  /* Interactive Natural Language "The Loop" */
+  .loop-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 768px) { .loop-grid { grid-template-columns: 1fr; } }
+  
+  .loop-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.25s ease;
+  }
+  .loop-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+  .loop-quote {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+  .loop-badge {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: var(--purple);
+    white-space: nowrap;
+  }
+
+  /* DONE Contract Feature Grid */
+  .contract-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    padding: 48px;
+  }
+  .contract-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 32px;
+  }
+  @media (max-width: 900px) { .contract-grid { grid-template-columns: 1fr; } }
+  
+  .contract-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+  }
+  .contract-item-check {
+    font-family: var(--font-mono);
+    color: var(--emerald);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .contract-item h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .contract-item p {
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  /* 32 Agent Skills Matrix Cards */
+  .skills-matrix {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 768px) { .skills-matrix { grid-template-columns: 1fr; } }
+
+  .skills-domain {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 32px;
+    transition: all 0.3s ease;
+  }
+  .skills-domain:hover { border-color: var(--border-hover); }
+  .domain-title {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--purple);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+  }
+  .domain-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .domain-tag {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+    color: var(--fg);
+  }
+
+  /* RAG & CLI Tables */
+  .table-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    overflow: hidden;
+  }
+  .tbl-scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    text-align: left;
+  }
+  th, td {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--bg-surface);
+  }
+  tr:last-child td { border-bottom: none; }
+  .val-yes { color: var(--emerald); font-weight: 600; }
+  .val-no { color: var(--muted); }
+
+  /* Constitution List */
+  .laws-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .law-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+  .law-card:hover {
+    border-color: var(--border-hover);
+    transform: translateX(4px);
+  }
+  .law-num {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--purple);
+    font-weight: 700;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 60px 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .footer-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
 </style>
 </head>
 <body>
 
+<!-- Floating Capsule Navigation -->
+<div class="nav-capsule-wrapper">
+  <nav class="nav-capsule">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span>llm-wiki</span>
+    </div>
+    <div class="nav-links">
+      <a href="#loop">The Loop</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#contract">Contract</a>
+      <a href="#skills">32 Skills</a>
+      <a href="#cli">CLI</a>
+      <button class="theme-btn" id="theme-toggle">Theme</button>
+      <a class="btn-pill-cta" href="https://github.com/chobizzy/llm-wiki" target="_blank">GitHub</a>
+    </div>
+  </nav>
+</div>
+
+<!-- Creative Hero Section -->
 <header>
   <div class="wrap">
-    <h1>llm-wiki</h1>
-    <p class="tagline">Your notes, compiled.</p>
-    <p class="lede">
-      A knowledge base your AI agents maintain under written law — not a chatbot,
-      not a vector store. 32 agent skills, a zero-dependency CLI, and a ready-to-copy
-      Obsidian vault governed by a constitution.
-    </p>
-    <div class="btns">
-      <a class="btn primary" href="https://github.com/chobizzy/llm-wiki">View on GitHub</a>
-      <a class="btn" href="https://github.com/chobizzy/llm-wiki#getting-started">Quickstart</a>
+    <div class="hero-badge">
+      <span>AI-Native</span> Knowledge Compiler for Obsidian
     </div>
-    <div class="badges">
-      <span class="pill">MIT</span>
-      <span class="pill">Python 3.10+</span>
-      <span class="pill">zero dependencies</span>
-      <span class="pill">32 skills</span>
-      <span class="pill">11 laws</span>
+    
+    <h1>The future of notes is <span class="text-accent">compiled.</span></h1>
+    
+    <p class="hero-lede">
+      A markdown knowledge base your AI agents compile and maintain under written law.
+      32 modular skills, zero-dependency Python CLI, and an 11-law constitution.
+    </p>
+
+    <div class="hero-btns">
+      <a class="btn-main btn-filled" href="https://github.com/chobizzy/llm-wiki" target="_blank">View on GitHub</a>
+      <a class="btn-main btn-outline" href="#getting-started">Getting Started</a>
+    </div>
+
+    <div class="hero-terminal">
+      <div>
+        <span style="color:var(--muted)">$</span> 
+        <span>pip install -e . && llm-wiki setup --vault ~/Vault</span>
+      </div>
+      <button class="copy-btn" onclick="copyCmd()">Copy</button>
     </div>
   </div>
 </header>
 
-<section>
+<!-- #1: The Loop (Natural Language Commands) -->
+<section id="loop">
   <div class="wrap">
-    <h2>Compile once, not on every question</h2>
-    <p class="sub">
-      Most "chat with your notes" tools retrieve at question time: you ask, a retriever
-      grabs some chunks, a model improvises, and nothing is learned. Ask again tomorrow
-      and the same work happens again.
+    <span class="section-tag">01 · Natural Interaction</span>
+    <h2 class="section-h2">The Loop: Talk Naturally</h2>
+    <p class="section-sub">
+      You talk to your agent in plain English. The skills route themselves automatically behind the scenes.
     </p>
-    <p>
-      llm-wiki inverts that. Knowledge is compiled <em>once</em>, when a source arrives,
-      into small linked markdown pages you can read yourself. Your sources are the source
-      code. Your agents are the compiler. The wiki is the build artifact — and Obsidian is
-      the IDE you browse it in.
-    </p>
-    <p>
-      The hard part isn't the compiling; it's keeping a compiler honest across many
-      sessions and more than one agent. So the vault ships with a constitution.
-    </p>
-  </div>
-</section>
 
-<section>
-  <div class="wrap">
-    <h2>Three layers</h2>
-    <p class="sub">Sources stay untouched. The wiki is generated. The schema governs both.</p>
-    <div class="layers">
-      <div class="layer">
-        <span class="n">Layer 1 · Sources</span>
-        <p>PDFs, articles, papers, chat exports, images. Immutable ground truth — agents read them and never write back.</p>
+    <div class="loop-grid">
+      <div class="loop-card">
+        <div class="loop-quote">"ingest my inbox"</div>
+        <div class="loop-badge">wiki-ingest</div>
       </div>
-      <div class="layer">
-        <span class="n">Layer 2 · The Wiki</span>
-        <p>Small linked pages with frontmatter and inline provenance. The compiled artifact you actually browse.</p>
+      <div class="loop-card">
+        <div class="loop-quote">"what connects transformer scaling to hardware?"</div>
+        <div class="loop-badge">wiki-query (multi-hop)</div>
       </div>
-      <div class="layer">
-        <span class="n">Layer 3 · The Schema</span>
-        <p><code>AGENTS.md</code>, 32 skills, and a CLI gate. How the whole thing stays honest over time.</p>
+      <div class="loop-card">
+        <div class="loop-quote">"save this session's insight"</div>
+        <div class="loop-badge">wiki-capture</div>
+      </div>
+      <div class="loop-card">
+        <div class="loop-quote">"audit my wiki and repair broken links"</div>
+        <div class="loop-badge">wiki-lint --consolidate</div>
+      </div>
+      <div class="loop-card">
+        <div class="loop-quote">"process my Claude history"</div>
+        <div class="loop-badge">claude-history-ingest</div>
+      </div>
+      <div class="loop-card">
+        <div class="loop-quote">"@work save this finding"</div>
+        <div class="loop-badge">wiki-capture (@named-vault)</div>
       </div>
     </div>
   </div>
 </section>
 
-<section>
+<!-- Creative Agency Sticky Split: 3-Layer Architecture -->
+<section id="architecture">
   <div class="wrap">
-    <h2>Compared to RAG</h2>
-    <p class="sub">Both answer questions from your documents. They differ in when the work happens, and in what you're left holding.</p>
-    <div class="tbl-scroll">
-      <table>
-        <thead>
-          <tr><th></th><th>Typical RAG / notes chatbot</th><th>llm-wiki</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Work happens</td><td>At query time, every time</td><td class="yes">Once, at ingest — reused forever</td></tr>
-          <tr><td>You get</td><td>An answer you can't inspect</td><td class="yes">Pages you can read, edit, and diff</td></tr>
-          <tr><td>Storage</td><td>Vector DB, embeddings, an index</td><td class="yes">Plain files in a git repo</td></tr>
-          <tr><td>Duplicates</td><td>Near-duplicate chunks pile up</td><td class="yes">One concept, one page — merged</td></tr>
-          <tr><td>Hallucination</td><td>Invisible, mixed into prose</td><td class="yes">Marked <code>^[inferred]</code></td></tr>
-          <tr><td>Trust</td><td>"The model said so"</td><td class="yes">Deterministic gate must pass</td></tr>
-          <tr><td>Lock-in</td><td>Rebuild when the tool dies</td><td class="yes">It's a folder of markdown</td></tr>
-          <tr><td>API keys</td><td>Required</td><td class="yes">None</td></tr>
-        </tbody>
-      </table>
+    <div class="sticky-split">
+      <div class="sticky-left">
+        <span class="section-tag">02 · Architecture</span>
+        <h2 class="section-h2">Three Layers. Compiled once.</h2>
+        <p class="section-sub">
+          Most "chat with notes" tools query at question time. llm-wiki compiles knowledge <em>once</em> when a source arrives into linked markdown pages you read in Obsidian.
+        </p>
+      </div>
+
+      <div class="cards-stack">
+        <div class="agency-card">
+          <span class="agency-card-num">LAYER 01</span>
+          <h3>Sources · Immutable Truth</h3>
+          <p>PDFs, articles, papers, chat exports, screenshots. Immutable ground truth stored in <code>_inbox/</code>. Agents read them and never modify them.</p>
+        </div>
+
+        <div class="agency-card">
+          <span class="agency-card-num">LAYER 02</span>
+          <h3>The Wiki · Build Artifact</h3>
+          <p>Small linked pages with frontmatter and inline provenance. The compiled artifact you browse, search, edit, and diff in Obsidian.</p>
+        </div>
+
+        <div class="agency-card">
+          <span class="agency-card-num">LAYER 03</span>
+          <h3>The Schema · Governance</h3>
+          <p><code>AGENTS.md</code>, 32 skills, and a CLI gate. Enforces written law to keep agents honest across sessions and models.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<section>
+<!-- #3: The DONE Contract -->
+<section id="contract">
   <div class="wrap">
-    <h2>Laws, not tips</h2>
-    <p class="sub">
-      Prompt-time instructions don't survive across sessions, models, or agents. A file in
-      the repo does. Every vault carries an <code>AGENTS.md</code> each skill must read —
-      versioned with your knowledge, and greppable. A sample of the eleven:
-    </p>
-    <ol class="laws">
-      <li><b>Never delete a wiki page.</b> Supersede it, and link the successor.</li>
-      <li><b>Never modify anything in <code>_inbox/</code>.</b> Sources are immutable ground truth.</li>
-      <li><b>Never present a synthesized claim as extracted.</b> Mark it <code>^[inferred]</code> or <code>^[ambiguous]</code>.</li>
-      <li><b>Never create a page for a concept that already has one.</b> Merge instead.</li>
-      <li><b>Never set <code>lifecycle</code> above <code>draft</code> on pages you write.</b> Review is human-only.</li>
-    </ol>
-    <p style="margin-top:1.3em">
-      An operation is done only when six conditions hold — pages, manifest, log, hot list,
-      index, and commit — and then the gate runs: <code>doctor</code> must pass and
-      <code>lint</code> must report zero failures. The agent is explicitly forbidden from
-      declaring done on its own assessment.
-    </p>
+    <div class="contract-card">
+      <span class="section-tag">03 · Deterministic Gate</span>
+      <h2 class="section-h2">The DONE Contract</h2>
+      <p style="color:var(--muted); font-size:1.1rem; max-width:640px;">
+        Agents are explicitly forbidden from grading their own homework. An operation is complete only when all six criteria hold, followed by a deterministic doctor & lint check.
+      </p>
+
+      <div class="contract-grid">
+        <div class="contract-item">
+          <div class="contract-item-check">✓ 01</div>
+          <h4>Full Frontmatter</h4>
+          <p>Pages written with complete YAML schema and wikilinks to related pages.</p>
+        </div>
+        <div class="contract-item">
+          <div class="contract-item-check">✓ 02</div>
+          <h4>Manifest Registry</h4>
+          <p><code>.manifest.json</code> updated for every source file ingested.</p>
+        </div>
+        <div class="contract-item">
+          <div class="contract-item-check">✓ 03</div>
+          <h4>Operation Log</h4>
+          <p><code>log.md</code> appended with ISO-8601Z timestamped agent action entry.</p>
+        </div>
+        <div class="contract-item">
+          <div class="contract-item-check">✓ 04</div>
+          <h4>Hot List Summary</h4>
+          <p><code>hot.md</code> refreshed with a concise update of modified concepts.</p>
+        </div>
+        <div class="contract-item">
+          <div class="contract-item-check">✓ 05</div>
+          <h4>Index Reconciled</h4>
+          <p><code>index.md</code> updated so every page is referenced exactly once.</p>
+        </div>
+        <div class="contract-item">
+          <div class="contract-item-check">✓ 06</div>
+          <h4>Deterministic Gate</h4>
+          <p><code>llm-wiki doctor</code> passes and <code>llm-wiki lint</code> reports 0 fail findings.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<section>
+<!-- vs RAG Comparison -->
+<section id="rag">
   <div class="wrap">
-    <h2>Get started</h2>
-    <p class="sub">Python 3.10+, and an agent that reads skills. Nothing else to install.</p>
-<pre><code>git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki
+    <span class="section-tag">04 · Paradigm Comparison</span>
+    <h2 class="section-h2">Compared to RAG</h2>
+    <p class="section-sub">
+      Both process your documents. They differ in when the work happens and what artifact is produced.
+    </p>
+
+    <div class="table-box">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Typical RAG</th>
+              <th>llm-wiki</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Execution Phase</td>
+              <td class="val-no">Query time (every question)</td>
+              <td class="val-yes">Ingest time (compiled once)</td>
+            </tr>
+            <tr>
+              <td>Storage Format</td>
+              <td class="val-no">Opaque Vector DB embeddings</td>
+              <td class="val-yes">Plain Markdown files in Git</td>
+            </tr>
+            <tr>
+              <td>Duplicates</td>
+              <td class="val-no">Near-duplicate chunks pile up</td>
+              <td class="val-yes">One concept, one page (merged)</td>
+            </tr>
+            <tr>
+              <td>Uncertainty Claim</td>
+              <td class="val-no">Swallowed in prose</td>
+              <td class="val-yes">Marked <code>^[inferred]</code> explicitly</td>
+            </tr>
+            <tr>
+              <td>Verification Gate</td>
+              <td class="val-no">Model self-assessment</td>
+              <td class="val-yes">Deterministic CLI doctor gate</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- #4: 32 Agent Skills Matrix -->
+<section id="skills">
+  <div class="wrap">
+    <span class="section-tag">05 · Capabilities</span>
+    <h2 class="section-h2">32 Modular Agent Skills</h2>
+    <p class="section-sub">
+      Skills live as plain <code>SKILL.md</code> files in <code>skills/</code> — read them, fork them, and extend them.
+    </p>
+
+    <div class="skills-matrix">
+      <div class="skills-domain">
+        <div class="domain-title">📥 Ingest & Capture</div>
+        <div class="domain-tags">
+          <span class="domain-tag">wiki-ingest</span>
+          <span class="domain-tag">wiki-capture</span>
+          <span class="domain-tag">wiki-import</span>
+          <span class="domain-tag">wiki-research</span>
+          <span class="domain-tag">claude-history-ingest</span>
+          <span class="domain-tag">hermes-history-ingest</span>
+        </div>
+      </div>
+
+      <div class="skills-domain">
+        <div class="domain-title">🧠 Query & Synthesize</div>
+        <div class="domain-tags">
+          <span class="domain-tag">wiki-query</span>
+          <span class="domain-tag">wiki-digest</span>
+          <span class="domain-tag">wiki-context-pack</span>
+          <span class="domain-tag">wiki-export</span>
+          <span class="domain-tag">wiki-synthesize</span>
+          <span class="domain-tag">wiki-agent</span>
+        </div>
+      </div>
+
+      <div class="skills-domain">
+        <div class="domain-title">🔧 Maintenance & Repair</div>
+        <div class="domain-tags">
+          <span class="domain-tag">wiki-lint</span>
+          <span class="domain-tag">cross-linker</span>
+          <span class="domain-tag">wiki-dedup</span>
+          <span class="domain-tag">wiki-update</span>
+          <span class="domain-tag">daily-update</span>
+          <span class="domain-tag">wiki-rebuild</span>
+          <span class="domain-tag">tag-taxonomy</span>
+        </div>
+      </div>
+
+      <div class="skills-domain">
+        <div class="domain-title">🏗️ Core & Setup</div>
+        <div class="domain-tags">
+          <span class="domain-tag">llm-wiki</span>
+          <span class="domain-tag">wiki-setup</span>
+          <span class="domain-tag">wiki-switch</span>
+          <span class="domain-tag">wiki-status</span>
+          <span class="domain-tag">impl-validator</span>
+          <span class="domain-tag">vault-skill-factory</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- #5: Zero-Dependency Python CLI Reference -->
+<section id="cli">
+  <div class="wrap">
+    <span class="section-tag">06 · Command Line</span>
+    <h2 class="section-h2">Zero-Dependency Python CLI</h2>
+    <p class="section-sub">
+      A ~2,600 line standard-library CLI handling deterministic operations so you never rely on LLMs for system state.
+    </p>
+
+    <div class="table-box">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>llm-wiki setup --vault PATH</code></td>
+              <td>Links skills into detected agent directories (~/.claude, ~/.hermes)</td>
+            </tr>
+            <tr>
+              <td><code>llm-wiki doctor [--strict]</code></td>
+              <td>Health-checks config, vault shape, and installed agent skills</td>
+            </tr>
+            <tr>
+              <td><code>llm-wiki lint [VAULT] --json</code></td>
+              <td>Audits frontmatter, broken wikilinks, duplicate titles, and orphans</td>
+            </tr>
+            <tr>
+              <td><code>llm-wiki graph-analyse VAULT</code></td>
+              <td>Analyzes graph topology for hub nodes, communities, and bridges</td>
+            </tr>
+            <tr>
+              <td><code>llm-wiki ast-extract PATH</code></td>
+              <td>Extracts code AST structures (classes, functions, imports) without LLM calls</td>
+            </tr>
+            <tr>
+              <td><code>llm-wiki pdf-extract PDF</code></td>
+              <td>Extracts text layer and OCR from PDFs with PyMuPDF</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Constitution Laws -->
+<section id="constitution">
+  <div class="wrap">
+    <span class="section-tag">07 · Governance</span>
+    <h2 class="section-h2">Laws, Not Tips</h2>
+    <p class="section-sub">
+      Prompt instructions vanish across sessions. A file in the repo persists. <code>AGENTS.md</code> defines written law for every skill.
+    </p>
+
+    <div class="laws-stack">
+      <div class="law-card">
+        <span class="law-num">LAW 01</span>
+        <div><b>Never delete a wiki page.</b> Supersede it: set <code>lifecycle: archived</code> and <code>superseded_by:</code>.</div>
+      </div>
+      <div class="law-card">
+        <span class="law-num">LAW 02</span>
+        <div><b>Never modify anything in <code>_inbox/</code>.</b> Layer 1 sources are immutable ground truth.</div>
+      </div>
+      <div class="law-card">
+        <span class="law-num">LAW 03</span>
+        <div><b>Never present a synthesized claim as extracted.</b> Mark it <code>^[inferred]</code>.</div>
+      </div>
+      <div class="law-card">
+        <span class="law-num">LAW 04</span>
+        <div><b>Never create duplicate pages for existing concepts.</b> One concept, one page — merge.</div>
+      </div>
+      <div class="law-card">
+        <span class="law-num">LAW 05</span>
+        <div><b>Never set <code>lifecycle</code> above  draft</b> on writes. <code>reviewed</code> / <code>verified</code> are human-only.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Getting Started -->
+<section id="getting-started">
+  <div class="wrap">
+    <span class="section-tag">08 · Deployment</span>
+    <h2 class="section-h2">Getting Started</h2>
+    <p class="section-sub">Zero external dependencies. Requires Python 3.10+ and an agent interface.</p>
+
+<pre style="background:var(--code-bg); padding:20px 24px; border-radius:18px; border:1px solid var(--border); font-family:var(--font-mono); font-size:0.9rem; overflow-x:auto;">
+<code>git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki
 pip install -e ~/Projects/llm-wiki
-llm-wiki setup --vault /path/to/your/vault</code></pre>
-    <p style="margin-top:1.4em">Then scaffold a vault and drop a paper into <code>_inbox/</code>:</p>
-<pre><code>cp -r ~/Projects/llm-wiki/vault-template ~/Documents/my-wiki
-cd ~/Documents/my-wiki &amp;&amp; git init &amp;&amp; git add -A &amp;&amp; git commit -m "init"
-llm-wiki setup --vault .</code></pre>
-    <p style="margin-top:1.4em">
-      Tell your agent <em>"ingest my inbox"</em> and read the pages it writes.
-      Full documentation lives in the
-      <a href="https://github.com/chobizzy/llm-wiki#readme">README</a>.
-    </p>
+llm-wiki setup --vault /path/to/your/vault</code>
+</pre>
   </div>
 </section>
 
+<!-- Footer -->
 <footer>
-  <div class="wrap">
-    <p>
-      MIT licensed ·
-      <a href="https://github.com/chobizzy/llm-wiki">GitHub</a> ·
-      <a href="https://github.com/chobizzy/llm-wiki/issues">Issues</a> ·
-      built for <a href="https://obsidian.md">Obsidian</a>
-    </p>
-    <p style="margin:0">
-      The LLM-wiki framing follows Andrej Karpathy's writing on treating a knowledge base
-      like compiled code.
-    </p>
+  <div class="wrap footer-flex">
+    <div>MIT Licensed · Built for Obsidian · <a href="https://github.com/chobizzy/llm-wiki" target="_blank">GitHub Repository</a></div>
+    <div>Distilled Knowledge Architecture</div>
   </div>
 </footer>
+
+<!-- JavaScript Logic -->
+<script>
+  // Theme Toggle
+  const themeBtn = document.getElementById('theme-toggle');
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  }
+  themeBtn.addEventListener('click', toggleTheme);
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+
+  function copyCmd() {
+    navigator.clipboard.writeText('pip install -e . && llm-wiki setup --vault ~/Vault');
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  }
+</script>
 
 </body>
 </html>
