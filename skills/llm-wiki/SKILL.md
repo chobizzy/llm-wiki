@@ -472,6 +472,8 @@ QMD is an optional search index layered on top of the vault. The markdown vault 
 
 Use the cheapest verification path that proves the new content is visible: `qmd update`, `qmd embed` only if vectors are stale or missing, then a targeted `qmd get` or `qmd ls` check for one written page or the collection root. Read-only skills should not refresh QMD.
 
+The procedure, configuration variables, and transports live in `references/qmd.md` — the single source every skill points to. Read it only when a `QMD_*` variable is actually set.
+
 ## Core Principles
 
 1. **Compile, don't retrieve.** The wiki is pre-compiled knowledge. When you ingest a source, update every relevant page — don't just create a summary of the source.

@@ -229,3 +229,5 @@ inconclusive sessions are skipped automatically.
 ## Optional: Refresh QMD After Setup
 
 If `QMD_WIKI_COLLECTION` is configured and the local QMD CLI is available, run `qmd update` after the initial vault files exist so the fresh vault is immediately queryable. No embedding pass is usually needed at setup time because the vault starts empty, so a plain update is enough unless you have already populated pages.
+
+QMD is entirely optional and unset by default. Its configuration variables and procedures are documented in `llm-wiki/references/qmd.md`.

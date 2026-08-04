@@ -229,7 +229,7 @@ See the *Paper Extraction Frame* in `references/ingest-prompts.md` for the readi
 
 **GUARD: If `$QMD_PAPERS_COLLECTION` is unset — the default — skip this step and proceed to Step 2.** Use `Grep` in Step 4 to check for existing pages on the same topic instead.
 
-When it is set, **read `references/qmd-search.md` and follow the *Source discovery* section** to find already-indexed papers that should be cross-linked from the page you're about to write.
+When it is set, **read `llm-wiki/references/qmd.md` and follow the *Source discovery* section** to find already-indexed papers that should be cross-linked from the page you're about to write.
 
 
 ### Step 1c: Code Source Detection (free local extraction — no LLM)
@@ -441,7 +441,7 @@ updated: TIMESTAMP
 
 **GUARD: If `$QMD_WIKI_COLLECTION` is unset — the default — skip this step.** The vault is the source of truth; QMD is only an index over it.
 
-When it is set, **read `references/qmd-search.md` and follow the *Index refresh* section.** Never roll back a completed ingest because an index refresh failed.
+When it is set, **read `llm-wiki/references/qmd.md` and follow the *Index refresh* section.** Never roll back a completed ingest because an index refresh failed.
 
 ## Handling Multiple Sources
 
@@ -460,7 +460,7 @@ After ingesting, verify:
 - [ ] Inferred and ambiguous claims are marked with `^[inferred]` / `^[ambiguous]`; `provenance:` frontmatter block is present on new and updated pages
 - [ ] Every new/updated page has a `summary:` frontmatter field (1–2 sentences, ≤200 chars)
 - [ ] `relationships:` block is present on pages where source text made typed connections clear; all entries use an allowed type from `llm-wiki/SKILL.md`
-- [ ] If `QMD_WIKI_COLLECTION` is set, the index refresh in `references/qmd-search.md` has run and its status is in the final report
+- [ ] If `QMD_WIKI_COLLECTION` is set, the index refresh in `llm-wiki/references/qmd.md` has run and its status is in the final report
 
 ## Reference
 
@@ -471,4 +471,4 @@ Read these when the step that cites them applies — not up front:
 | `references/ingest-prompts.md` | Extracting (Step 2) — LLM prompt templates, including the Paper Extraction Frame |
 | `references/url-sources.md` | The source is a web URL |
 | `references/pageindex.md` | The source is a long text PDF and `PAGEINDEX_REPO` is set |
-| `references/qmd-search.md` | `QMD_PAPERS_COLLECTION` or `QMD_WIKI_COLLECTION` is set |
+| `llm-wiki/references/qmd.md` | `QMD_PAPERS_COLLECTION` or `QMD_WIKI_COLLECTION` is set |
