@@ -39,11 +39,13 @@ from pathlib import Path
 try:
     from llm_wiki.cache import (
         ManifestError, canonical_key, check_sources, entry_time, read_manifest_doc,
+        write_manifest_doc,
     )
 except ImportError:  # not pip-installed — fall back to the adjacent package
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from llm_wiki.cache import (
         ManifestError, canonical_key, check_sources, entry_time, read_manifest_doc,
+        write_manifest_doc,
     )
 
 MANIFEST_NAME = ".manifest.json"
@@ -63,14 +65,6 @@ def load_manifest(vault: Path) -> dict:
         raise SystemExit(f"error: {exc}")
     doc.setdefault("sources", {})
     return doc
-
-
-def save_manifest(vault: Path, doc: dict) -> None:
-    """Write via a temp file so an interrupted run cannot truncate the ledger."""
-    path = vault / MANIFEST_NAME
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
-    os.replace(tmp, path)
 
 
 def merge_entries(entries: list[dict]) -> dict:
@@ -133,7 +127,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
         return 0
 
     doc["sources"] = after
-    save_manifest(vault, doc)
+    write_manifest_doc(vault, doc)
     print(f"\nwrote {vault / MANIFEST_NAME}")
     return 0
 

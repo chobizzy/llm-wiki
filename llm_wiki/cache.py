@@ -114,6 +114,20 @@ def read_manifest_doc(vault: Path) -> dict:
     return doc
 
 
+def write_manifest_doc(vault: Path, doc: dict) -> None:
+    """Write the whole manifest via a temp file, then rename over the original.
+
+    An interrupted in-place write leaves a truncated ledger — which the reader
+    above then refuses, so one killed `cache-update` would block every later
+    one. `os.replace` is atomic, so a reader sees either the whole old document
+    or the whole new one.
+    """
+    path = _manifest_path(vault)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def _load_manifest(vault: Path) -> dict[str, SourceEntry]:
     sources = read_manifest_doc(vault).get("sources", {})
     if not isinstance(sources, dict):
@@ -126,9 +140,7 @@ def _save_manifest(vault: Path, sources: dict[str, SourceEntry]) -> None:
     # instead of being replaced by one holding nothing but `sources`.
     doc = read_manifest_doc(vault)
     doc["sources"] = sources
-    _manifest_path(vault).write_text(
-        json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    write_manifest_doc(vault, doc)
 
 
 def sha256_file(path: Path, chunk: int = 1 << 20) -> str:

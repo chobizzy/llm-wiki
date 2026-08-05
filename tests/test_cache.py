@@ -141,6 +141,11 @@ class UpdateSourceTests(unittest.TestCase):
         result = check_sources(self.vault, [self.source])
         self.assertEqual(result["modified"], [str(self.source)])
 
+    def test_write_leaves_no_temp_file_behind(self) -> None:
+        """The write goes via <name>.tmp and renames; nothing should survive it."""
+        update_source(self.vault, self.source, pages_created=[])
+        self.assertEqual(list(self.vault.glob("*.tmp")), [])
+
     def test_every_spelling_of_the_path_collapses_to_one_entry(self) -> None:
         """A duplicate left behind is a stale entry a later check can read."""
         (self.vault / ".manifest.json").write_text(

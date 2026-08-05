@@ -139,7 +139,7 @@ def _filter_unchanged(
 ) -> tuple[list[dict], int]:
     """Remove files whose hash matches the manifest. Returns (to_ingest, skipped_count)."""
     try:
-        from llm_wiki.cache import ManifestError, check_sources, compute_hash
+        from llm_wiki.cache import ManifestError, check_sources
         paths = [Path(f["path"]) for f in files]
         result = check_sources(vault, paths)
         unchanged_set = set(result["unchanged"])

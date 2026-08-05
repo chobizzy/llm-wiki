@@ -137,7 +137,7 @@ class ManifestIOTests(unittest.TestCase):
 
         doc = manifest.load_manifest(self.vault)
         doc["sources"], _ = manifest.normalize_sources(doc["sources"])
-        manifest.save_manifest(self.vault, doc)
+        manifest.write_manifest_doc(self.vault, doc)
 
         written = json.loads((self.vault / ".manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(written["version"], 1)
@@ -153,7 +153,7 @@ class ManifestIOTests(unittest.TestCase):
             manifest.load_manifest(self.vault)
 
     def test_save_leaves_no_temp_file(self) -> None:
-        manifest.save_manifest(self.vault, {"sources": {}})
+        manifest.write_manifest_doc(self.vault, {"sources": {}})
         leftovers = list(self.vault.glob("*.tmp"))
         self.assertEqual(leftovers, [])
 
