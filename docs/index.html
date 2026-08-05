@@ -1,970 +1,1202 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>llm-wiki — your notes, compiled</title>
-<meta name="description" content="An LLM wiki for Obsidian: a markdown knowledge base your AI agents compile and maintain under written law. 32 skills for Claude Code and Hermes, a zero-dependency Python CLI, and a vault template governed by an 11-law constitution.">
+<title>llm-wiki: your notes, compiled</title>
+<meta name="description" content="A knowledge base your AI agents maintain under written law. 32 agent skills for Claude Code and Hermes, a zero-dependency Python CLI, and an Obsidian vault template governed by an 11-law constitution.">
 <link rel="canonical" href="https://chobizzy.github.io/llm-wiki/">
-<meta property="og:title" content="llm-wiki — your notes, compiled">
-<meta property="og:description" content="A markdown knowledge base your AI agents compile and maintain under written law.">
+<meta property="og:title" content="llm-wiki: your notes, compiled">
+<meta property="og:description" content="A knowledge base your AI agents maintain under written law. Not a chatbot. Not a vector store.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://chobizzy.github.io/llm-wiki/">
-
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#06140f">
 
 <style>
-  :root {
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-
-    /* Dark Mode Theme */
-    --bg: #050508;
-    --bg-surface: #0e0e14;
-    --card-bg: rgba(20, 20, 28, 0.7);
-    --border: rgba(255, 255, 255, 0.1);
-    --border-hover: rgba(168, 85, 247, 0.4);
-    --fg: #f4f4f6;
-    --muted: #9999a6;
-    
-    /* Clean Obsidian Purple Accent */
-    --accent-gradient: linear-gradient(135deg, var(--fg) 30%, #c084fc 100%);
-    --purple: #a855f7;
-    --cyan: #06b6d4;
-    --emerald: #10b981;
-
-    --code-bg: #0a0a0f;
+  /* Cormorant Light, latin subset, SIL Open Font License. See font/OFL.txt.
+     Self-hosted rather than linked, so the page still makes no third-party
+     requests. Display type only; body and code stay on system stacks. */
+  @font-face {
+    font-family: "Cormorant";
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url("font/cormorant-300-latin.woff2") format("woff2");
   }
 
-  [data-theme="light"] {
-    --bg: #f8f8fc;
-    --bg-surface: #ffffff;
-    --card-bg: rgba(255, 255, 255, 0.9);
-    --border: rgba(0, 0, 0, 0.08);
-    --border-hover: rgba(126, 34, 206, 0.4);
-    --fg: #09090e;
-    --muted: #666675;
+  :root {
+    /* Near-black with a green cast: reads as black at a glance, but the hue
+       shows in large fields and keeps the art from going fully neutral. The
+       darkness is the point: over a near-black backdrop, screen blend barely
+       tints the art at all, so the illustrations stay crisp and the tiles
+       cannot read as lit rectangles. --dim and --faint are ink at 78% and 62%
+       resolved against this flood; recompute them if the flood changes. */
+    --flood: #06140f;
+    --ink: #f5f5f5;
+    --dim: #c0c4c2;
+    --faint: #9aa09e;
 
-    --accent-gradient: linear-gradient(135deg, var(--fg) 30%, #7e22ce 100%);
-    --purple: #7e22ce;
-    --cyan: #0e7490;
-    --emerald: #047857;
+    /* The only colour on the page, and deliberately rationed: mono eyebrows,
+       graph nodes, nav hover. Not buttons, not links, not body copy. */
+    --accent: #3fd3a0;
 
-    --code-bg: #f0f0f5;
+    /* Decorative section rules can be faint. --rule-strong draws control
+       borders, which WCAG 1.4.11 treats as interface boundaries needing 3:1;
+       on a flood this dark that takes 0.36 upward, not the 0.18 of a rule. */
+    --rule: rgba(245, 245, 245, 0.18);
+    --rule-strong: rgba(245, 245, 245, 0.38);
+
+    --font-display: "Cormorant", ui-serif, Georgia, "Times New Roman", serif;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+      "Liberation Mono", monospace;
+
+    --gutter: 24px;
+    --maxw: 1180px;
+    --nav-h: 64px;
+
+    /* Film grain, generated inline so it costs no request. Laid over the art
+       to keep the blend from looking like a flat digital overlay. */
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+
+  html {
+    scroll-behavior: smooth;
+    /* Anchors must clear the sticky nav instead of landing behind it. */
+    scroll-padding-top: calc(var(--nav-h) + 24px);
+  }
 
   body {
-    background: var(--bg);
-    color: var(--fg);
+    background: var(--flood);
+    color: var(--ink);
     font-family: var(--font-sans);
-    line-height: 1.6;
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.7;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  .skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ink);
+    color: var(--flood);
+    padding: 12px 18px;
+    z-index: 100;
+  }
+  .skip:focus { left: 8px; top: 8px; }
 
   .wrap {
-    max-width: 1140px;
+    max-width: var(--maxw);
     margin: 0 auto;
-    padding: 0 24px;
+    padding: 0 var(--gutter);
   }
 
-  a { color: var(--fg); text-decoration: none; }
+  /* ---- Type -------------------------------------------------------------
+     Huge, light, uppercase, letter-spaced. Cormorant at weight 300 holds its
+     hairlines at display size, which is the whole reason for the webfont. */
 
-  /* Floating Capsule Navbar */
-  .nav-capsule-wrapper {
-    position: fixed;
-    top: 20px;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    padding: 0 16px;
-  }
-  .nav-capsule {
-    width: 100%;
-    max-width: 960px;
-    background: rgba(10, 10, 15, 0.75);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 10px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-  }
-  [data-theme="light"] .nav-capsule {
-    background: rgba(255, 255, 255, 0.85);
-  }
-  .brand {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .brand-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--purple);
-  }
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-  .nav-links a {
-    color: var(--muted);
-    transition: color 0.2s ease;
-  }
-  .nav-links a:hover { color: var(--fg); }
-  
-  .btn-pill-cta {
-    background: var(--fg);
-    color: var(--bg);
-    font-weight: 600;
-    font-size: 0.84rem;
-    padding: 8px 18px;
-    border-radius: 999px;
-    transition: all 0.25s ease;
-    border: 1px solid var(--fg);
-  }
-  .btn-pill-cta:hover {
-    background: transparent;
-    color: var(--fg);
-  }
-
-  .theme-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    padding: 5px 12px;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .theme-btn:hover { border-color: var(--fg); color: var(--fg); }
-
-  /* Hero Section */
-  header {
-    padding: 160px 0 90px;
-    text-align: center;
-    position: relative;
-  }
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    padding: 6px 18px;
-    border-radius: 999px;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-bottom: 28px;
-  }
-  .hero-badge span {
-    color: var(--purple);
-    font-weight: 700;
-  }
-  
-  h1 {
-    font-size: clamp(3rem, 7vw, 5rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.08;
-    margin-bottom: 24px;
-    max-width: 920px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .text-accent {
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .hero-lede {
-    font-size: clamp(1.15rem, 2.5vw, 1.35rem);
-    color: var(--muted);
-    max-width: 680px;
-    margin: 0 auto 40px;
-    line-height: 1.6;
-    font-weight: 400;
-  }
-
-  .hero-btns {
-    display: flex;
-    gap: 14px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 48px;
-  }
-  .btn-main {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 32px;
-    border-radius: 999px;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .btn-filled {
-    background: var(--fg);
-    color: var(--bg);
-    border: 1px solid var(--fg);
-  }
-  .btn-filled:hover {
-    transform: translateY(-2px);
-    background: transparent;
-    color: var(--fg);
-  }
-  .btn-outline {
-    border: 1px solid var(--border);
-    color: var(--fg);
-    background: var(--card-bg);
-  }
-  .btn-outline:hover {
-    border-color: var(--fg);
-    transform: translateY(-2px);
-  }
-
-  /* Command Terminal Hero Card */
-  .hero-terminal {
-    max-width: 680px;
-    margin: 0 auto;
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 20px 24px;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: border-color 0.3s ease;
-  }
-  .hero-terminal:hover {
-    border-color: var(--border-hover);
-  }
-  .copy-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid var(--border);
-    color: var(--fg);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    padding: 5px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .copy-btn:hover { background: var(--fg); color: var(--bg); }
-
-  /* Sections General */
-  section {
-    padding: 100px 0;
-    border-top: 1px solid var(--border);
-  }
-  .section-tag {
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
+  h1, h2 {
+    font-family: var(--font-display);
+    font-weight: 300;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--purple);
-    margin-bottom: 12px;
-    display: block;
-    font-weight: 600;
-  }
-  .section-h2 {
-    font-size: clamp(2.2rem, 4vw, 3.2rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.15;
-    margin-bottom: 16px;
-  }
-  .section-sub {
-    color: var(--muted);
-    font-size: 1.1rem;
-    max-width: 620px;
-    margin-bottom: 48px;
-    line-height: 1.6;
+    letter-spacing: 0.03em;
+    line-height: 0.98;
   }
 
-  /* Creative Agency Sticky Split Services / Layers */
-  .sticky-split {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 48px;
-  }
-  @media (max-width: 900px) {
-    .sticky-split { grid-template-columns: 1fr; }
-  }
-  .sticky-left {
-    position: sticky;
-    top: 120px;
-    height: fit-content;
-  }
-  .cards-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
-  .agency-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    padding: 36px;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    overflow: hidden;
-  }
-  .agency-card:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-4px);
-  }
-  .agency-card-num {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--purple);
-    font-weight: 700;
-    margin-bottom: 16px;
-    display: block;
-  }
-  .agency-card h3 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin-bottom: 12px;
-    letter-spacing: -0.02em;
-  }
-  .agency-card p {
-    color: var(--muted);
-    font-size: 1rem;
-    line-height: 1.65;
+  h1 { font-size: clamp(2.9rem, 9.5vw, 6.4rem); }
+  h2 { font-size: clamp(2rem, 5vw, 3.5rem); }
+
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    line-height: 1.1;
   }
 
-  /* Interactive Natural Language "The Loop" */
-  .loop-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-  @media (max-width: 768px) { .loop-grid { grid-template-columns: 1fr; } }
-  
-  .loop-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    transition: all 0.25s ease;
-  }
-  .loop-card:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-2px);
-  }
-  .loop-quote {
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--fg);
-    letter-spacing: -0.01em;
-  }
-  .loop-badge {
+  h4 {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    border-radius: 999px;
-    color: var(--purple);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.68rem;
+    color: var(--faint);
+  }
+
+  /* The mono eyebrow. Numbered on the feature rail, unnumbered elsewhere.
+     Carries the accent; other meta text (nav, footer, table heads) stays
+     neutral so the colour reads as a thread rather than a second body style. */
+  .eyebrow {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+
+  .lede {
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    line-height: 1.55;
+    color: var(--dim);
+    max-width: 34ch;
+  }
+
+  .sub {
+    color: var(--dim);
+    max-width: 62ch;
+    margin-top: 20px;
+  }
+
+  code, pre { font-family: var(--font-mono); }
+
+  .ic {
+    font-size: 0.86em;
+    color: var(--ink);
     white-space: nowrap;
   }
 
-  /* DONE Contract Feature Grid */
-  .contract-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 32px;
-    padding: 48px;
-  }
-  .contract-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 32px;
-  }
-  @media (max-width: 900px) { .contract-grid { grid-template-columns: 1fr; } }
-  
-  .contract-item {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 24px;
-  }
-  .contract-item-check {
-    font-family: var(--font-mono);
-    color: var(--emerald);
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-  .contract-item h4 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .contract-item p {
-    color: var(--muted);
-    font-size: 0.92rem;
-    line-height: 1.5;
-  }
+  /* ---- Buttons ---------------------------------------------------------- */
 
-  /* 32 Agent Skills Matrix Cards */
-  .skills-matrix {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-  @media (max-width: 768px) { .skills-matrix { grid-template-columns: 1fr; } }
-
-  .skills-domain {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    padding: 32px;
-    transition: all 0.3s ease;
-  }
-  .skills-domain:hover { border-color: var(--border-hover); }
-  .domain-title {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 24px;
+    border: 1px solid var(--rule-strong);
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--purple);
-    font-weight: 700;
+    font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 16px;
+    letter-spacing: 0.16em;
+    text-decoration: none;
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
-  .domain-tags {
+  .btn:hover { border-color: var(--ink); }
+  .btn:active { transform: translateY(1px); }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--flood);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { background: transparent; color: var(--ink); }
+
+  .btn-quiet { padding: 9px 16px; }
+
+  /* ---- Nav -------------------------------------------------------------- */
+
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: var(--nav-h);
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .domain-tag {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    padding: 5px 12px;
-    border-radius: 999px;
-    color: var(--fg);
+    align-items: center;
+    background: var(--flood);
+    border-bottom: 1px solid var(--rule);
   }
 
-  /* RAG & CLI Tables */
-  .table-box {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 28px;
-    overflow: hidden;
-  }
-  .tbl-scroll { overflow-x: auto; }
-  table {
+  .nav-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
     width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92rem;
-    text-align: left;
-  }
-  th, td {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-  }
-  th {
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: var(--bg-surface);
-  }
-  tr:last-child td { border-bottom: none; }
-  .val-yes { color: var(--emerald); font-weight: 600; }
-  .val-no { color: var(--muted); }
-
-  /* Constitution List */
-  .laws-stack {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .law-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 20px 24px;
-    display: flex;
-    gap: 16px;
     align-items: center;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-  }
-  .law-card:hover {
-    border-color: var(--border-hover);
-    transform: translateX(4px);
-  }
-  .law-num {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--purple);
-    font-weight: 700;
-  }
-
-  /* Footer */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 60px 0;
-    color: var(--muted);
-    font-size: 0.9rem;
-  }
-  .footer-flex {
-    display: flex;
     justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
     gap: 20px;
   }
+
+  .brand {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .nav-actions { display: flex; align-items: center; gap: 24px; }
+
+  .nav-links { display: flex; gap: 22px; }
+
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--faint);
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  @media (max-width: 820px) {
+    .nav-links { display: none; }
+  }
+
+  /* ---- Art tiles --------------------------------------------------------
+     Screen blend maps black to the backdrop and white to white, so grayscale
+     art on a black ground dissolves into the flood instead of sitting in a
+     rectangle. `isolation` keeps the blend inside the tile rather than letting
+     it reach the page behind. Every source image is measured for edge
+     luminance before it ships; see art/README.md. */
+
+  .tile {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--flood);
+    aspect-ratio: 666 / 574;
+  }
+
+  .tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: screen;
+  }
+
+  /* Two overlapping fades. The radial one softens the corners; the linear ones
+     kill the straight edges, which the radial alone cannot reach. Without the
+     linear pair the tile reads as a lit rectangle sitting on the flood: the
+     source art bottoms out around 20-36/255 at its border, not at true black,
+     and screen blend lifts that just enough to draw a visible seam. */
+  .tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(to right, var(--flood), transparent 14%,
+        transparent 86%, var(--flood)),
+      linear-gradient(to bottom, var(--flood), transparent 12%,
+        transparent 88%, var(--flood)),
+      radial-gradient(130% 115% at 50% 45%, transparent 42%, var(--flood) 100%);
+    pointer-events: none;
+  }
+
+  /* Barely there. The grain covers the tile but not the page around it, so at
+     any real strength the texture itself draws the rectangle it is meant to
+     help hide. The source art already carries film grain from capture. */
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-image: var(--grain);
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  /* ---- Hero ------------------------------------------------------------- */
+
+  .hero {
+    padding: clamp(56px, 10vw, 120px) 0 clamp(64px, 9vw, 110px);
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(32px, 6vw, 80px);
+    align-items: center;
+  }
+
+  /* Grid children default to min-width:auto and refuse to shrink below their
+     content, which would let the long clone command widen the whole page. */
+  .hero-copy { min-width: 0; }
+
+  .hero-art {
+    min-width: 0;
+    aspect-ratio: 3 / 4;
+    max-height: 78vh;
+  }
+
+  .hero h1 { margin-bottom: 26px; }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 32px 0;
+  }
+
+  .hero-note {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  @media (max-width: 880px) {
+    .hero-grid { grid-template-columns: minmax(0, 1fr); }
+    .hero-art { order: -1; aspect-ratio: 4 / 3; max-height: none; }
+    .lede { max-width: none; }
+  }
+
+  /* ---- Install ---------------------------------------------------------- */
+
+  .install {
+    border: 1px solid var(--rule-strong);
+    max-width: 560px;
+  }
+
+  .install-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 8px 8px 16px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .install pre {
+    padding: 16px;
+    font-size: 0.78rem;
+    line-height: 2;
+    overflow-x: auto;
+    color: var(--dim);
+  }
+
+  .prompt { color: var(--faint); user-select: none; }
+
+  /* ---- Sections --------------------------------------------------------- */
+
+  .sec {
+    padding: clamp(64px, 11vw, 140px) 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .sec-head { margin-bottom: clamp(40px, 6vw, 72px); }
+
+  /* ---- Feature rail ----------------------------------------------------- */
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(28px, 5vw, 76px);
+    align-items: center;
+    padding: clamp(40px, 6vw, 78px) 0;
+    border-top: 1px solid var(--rule);
+  }
+  .row:first-child { border-top: none; padding-top: 0; }
+
+  /* Alternate which side the art falls on, so the rail does not read as a list. */
+  .row:nth-child(even) .row-art { order: -1; }
+
+  .row-copy { min-width: 0; }
+  .row-art { min-width: 0; }
+
+  .row-copy h3 { margin-bottom: 18px; }
+
+  .row-copy p { color: var(--dim); max-width: 46ch; }
+
+  @media (max-width: 800px) {
+    .row { grid-template-columns: minmax(0, 1fr); }
+    .row:nth-child(even) .row-art { order: 0; }
+    .row-copy p { max-width: none; }
+  }
+
+  /* ---- Graph band ------------------------------------------------------- */
+
+  /* Two children only: the generator emits .graph-body then <figcaption>, so
+     the graph takes the wider first column and the caption sits beside it. */
+  .graph {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(28px, 5vw, 64px);
+    align-items: center;
+  }
+
+  .graph-body { min-width: 0; }
+
+  .graph-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 68vh;
+    color: var(--ink);
+  }
+
+  .graph-edges line { stroke: currentColor; stroke-width: 1; opacity: 0.22; }
+  .graph-nodes circle { fill: var(--accent); opacity: 0.9; }
+
+  .graph figcaption {
+    color: var(--dim);
+    max-width: 40ch;
+  }
+
+  @media (max-width: 820px) {
+    .graph { grid-template-columns: minmax(0, 1fr); }
+    .graph figcaption { max-width: none; }
+  }
+
+  /* ---- Spec table ------------------------------------------------------- */
+
+  .table-scroll { overflow-x: auto; }
+
+  .spec {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .spec th, .spec td {
+    padding: 15px 18px;
+    border-top: 1px solid var(--rule);
+    vertical-align: top;
+    font-weight: 400;
+  }
+
+  .spec thead th {
+    border-top: none;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .spec tbody th {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .spec td { color: var(--dim); }
+
+  /* The llm-wiki column is the answer, so it reads at full strength while the
+     comparison column stays dimmed. */
+  .spec .mine { color: var(--ink); }
+  .spec thead .mine { color: var(--ink); }
+
+  /* ---- DONE contract ---------------------------------------------------- */
+
+  .done-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .done-item {
+    background: var(--flood);
+    padding: 28px 26px;
+  }
+
+  .done-n {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    color: var(--faint);
+    margin-bottom: 14px;
+  }
+
+  .done-item h3 {
+    font-size: 1.35rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  .done-item p { color: var(--dim); font-size: 0.92rem; }
+
+  /* ---- Laws ------------------------------------------------------------- */
+
+  .laws-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: clamp(56px, 8vw, 90px) 0 28px;
+  }
+
+  .laws-head span {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .laws { list-style: none; }
+
+  .law {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 24px;
+    padding: 20px 0;
+    border-top: 1px solid var(--rule);
+    color: var(--dim);
+  }
+
+  .law-n {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    color: var(--faint);
+    padding-top: 3px;
+  }
+
+  .law b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .law { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  }
+
+  /* ---- Skills ----------------------------------------------------------- */
+
+  .skill-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: clamp(28px, 4vw, 48px);
+  }
+
+  .skill-group h4 { margin-bottom: 16px; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    padding: 6px 11px;
+    border: 1px solid var(--rule);
+    color: var(--dim);
+  }
+
+  /* ---- CLI -------------------------------------------------------------- */
+
+  .cli { margin-top: clamp(64px, 9vw, 110px); }
+
+  .cli-title { margin-bottom: 0; }
+
+  /* ---- Footer ----------------------------------------------------------- */
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 44px 0;
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .footer-inner a { color: var(--dim); }
 </style>
 </head>
 <body>
 
-<!-- Floating Capsule Navigation -->
-<div class="nav-capsule-wrapper">
-  <nav class="nav-capsule">
-    <div class="brand">
-      <div class="brand-dot"></div>
-      <span>llm-wiki</span>
-    </div>
-    <div class="nav-links">
-      <a href="#loop">The Loop</a>
-      <a href="#architecture">Architecture</a>
-      <a href="#contract">Contract</a>
-      <a href="#skills">32 Skills</a>
-      <a href="#cli">CLI</a>
-      <button class="theme-btn" id="theme-toggle">Theme</button>
-      <a class="btn-pill-cta" href="https://github.com/chobizzy/llm-wiki" target="_blank">GitHub</a>
-    </div>
-  </nav>
-</div>
+<a class="skip" href="#main">Skip to content</a>
 
-<!-- Creative Hero Section -->
-<header>
-  <div class="wrap">
-    <div class="hero-badge">
-      <span>AI-Native</span> Knowledge Compiler for Obsidian
-    </div>
-    
-    <h1>The future of notes is <span class="text-accent">compiled.</span></h1>
-    
-    <p class="hero-lede">
-      A markdown knowledge base your AI agents compile and maintain under written law.
-      32 modular skills, zero-dependency Python CLI, and an 11-law constitution.
-    </p>
-
-    <div class="hero-btns">
-      <a class="btn-main btn-filled" href="https://github.com/chobizzy/llm-wiki" target="_blank">View on GitHub</a>
-      <a class="btn-main btn-outline" href="#getting-started">Getting Started</a>
-    </div>
-
-    <div class="hero-terminal">
-      <div>
-        <span style="color:var(--muted)">$</span> 
-        <span>pip install -e . && llm-wiki setup --vault ~/Vault</span>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">llm-wiki</a>
+    <div class="nav-actions">
+      <div class="nav-links">
+        <a href="#architecture">How it works</a>
+        <a href="#rag">vs. RAG</a>
+        <a href="#contract">The law</a>
+        <a href="#skills">Skills</a>
+        <a href="#cli">CLI</a>
       </div>
-      <button class="copy-btn" onclick="copyCmd()">Copy</button>
+      <a class="btn btn-quiet" href="https://github.com/chobizzy/llm-wiki">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">Open source &middot; MIT license</span>
+      <h1>Your notes,<br>compiled.</h1>
+
+      <p class="lede">
+        A knowledge base your AI agents maintain under written law.
+        Not a chatbot. Not a vector store.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/chobizzy/llm-wiki">View on GitHub</a>
+        <span class="hero-note">Python 3.10+ &middot; no dependencies</span>
+      </div>
+
+      <div class="install" id="getting-started">
+        <div class="install-head">
+          <span>install</span>
+          <button class="btn btn-quiet" id="copy-btn" type="button">Copy</button>
+        </div>
+<pre id="install-cmd"><span class="prompt">$ </span>git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki
+<span class="prompt">$ </span>pip install -e ~/Projects/llm-wiki
+<span class="prompt">$ </span>llm-wiki setup --vault /path/to/your/vault</pre>
+      </div>
+    </div>
+
+    <div class="tile hero-art">
+      <img src="art/hero.webp" alt="" width="900" height="1200">
     </div>
   </div>
 </header>
 
-<!-- #1: The Loop (Natural Language Commands) -->
-<section id="loop">
+<section class="sec" id="architecture">
   <div class="wrap">
-    <span class="section-tag">01 · Natural Interaction</span>
-    <h2 class="section-h2">The Loop: Talk Naturally</h2>
-    <p class="section-sub">
-      You talk to your agent in plain English. The skills route themselves automatically behind the scenes.
-    </p>
-
-    <div class="loop-grid">
-      <div class="loop-card">
-        <div class="loop-quote">"ingest my inbox"</div>
-        <div class="loop-badge">wiki-ingest</div>
-      </div>
-      <div class="loop-card">
-        <div class="loop-quote">"what connects transformer scaling to hardware?"</div>
-        <div class="loop-badge">wiki-query (multi-hop)</div>
-      </div>
-      <div class="loop-card">
-        <div class="loop-quote">"save this session's insight"</div>
-        <div class="loop-badge">wiki-capture</div>
-      </div>
-      <div class="loop-card">
-        <div class="loop-quote">"audit my wiki and repair broken links"</div>
-        <div class="loop-badge">wiki-lint --consolidate</div>
-      </div>
-      <div class="loop-card">
-        <div class="loop-quote">"process my Claude history"</div>
-        <div class="loop-badge">claude-history-ingest</div>
-      </div>
-      <div class="loop-card">
-        <div class="loop-quote">"@work save this finding"</div>
-        <div class="loop-badge">wiki-capture (@named-vault)</div>
-      </div>
+    <div class="sec-head">
+      <span class="eyebrow">How it works</span>
+      <h2>Compiled once,<br>not retrieved every time</h2>
+      <p class="sub">
+        Your sources are the source code. Your agents are the compiler. The wiki is the build
+        artifact, and Obsidian is the IDE you browse it in.
+      </p>
     </div>
-  </div>
-</section>
 
-<!-- Creative Agency Sticky Split: 3-Layer Architecture -->
-<section id="architecture">
-  <div class="wrap">
-    <div class="sticky-split">
-      <div class="sticky-left">
-        <span class="section-tag">02 · Architecture</span>
-        <h2 class="section-h2">Three Layers. Compiled once.</h2>
-        <p class="section-sub">
-          Most "chat with notes" tools query at question time. llm-wiki compiles knowledge <em>once</em> when a source arrives into linked markdown pages you read in Obsidian.
+    <div class="row">
+      <div class="row-copy">
+        <span class="eyebrow">#1 &nbsp; Compile</span>
+        <h3>Compiled, not retrieved</h3>
+        <p>
+          Most tools retrieve at question time: you ask, a retriever grabs some chunks, a model
+          improvises, and nothing is learned. Ask again tomorrow and the same work happens again.
+          llm-wiki inverts that. Knowledge is compiled once, when a source arrives, into small
+          linked markdown pages you can read yourself.
         </p>
       </div>
+      <div class="tile row-art">
+        <img src="art/compile.webp" alt="" width="1200" height="900" loading="lazy">
+      </div>
+    </div>
 
-      <div class="cards-stack">
-        <div class="agency-card">
-          <span class="agency-card-num">LAYER 01</span>
-          <h3>Sources · Immutable Truth</h3>
-          <p>PDFs, articles, papers, chat exports, screenshots. Immutable ground truth stored in <code>_inbox/</code>. Agents read them and never modify them.</p>
-        </div>
+    <div class="row">
+      <div class="row-copy">
+        <span class="eyebrow">#2 &nbsp; Govern</span>
+        <h3>Laws, not tips</h3>
+        <p>
+          The hard part is not the compiling. It is keeping a compiler honest across many sessions
+          and more than one agent. So the vault ships with a constitution: eleven numbered laws, a
+          six-point definition of done, and a gate that decides whether an operation completed.
+          Every rule has a number, a <i>never</i>, or a check.
+        </p>
+      </div>
+      <div class="tile row-art">
+        <img src="art/govern.webp" alt="" width="1200" height="900" loading="lazy">
+      </div>
+    </div>
 
-        <div class="agency-card">
-          <span class="agency-card-num">LAYER 02</span>
-          <h3>The Wiki · Build Artifact</h3>
-          <p>Small linked pages with frontmatter and inline provenance. The compiled artifact you browse, search, edit, and diff in Obsidian.</p>
-        </div>
+    <div class="row">
+      <div class="row-copy">
+        <span class="eyebrow">#3 &nbsp; Ingest</span>
+        <h3>Drop it in the inbox</h3>
+        <p>
+          Put a paper in <code class="ic">_inbox/</code>, say <i>ingest my inbox</i>, and an agent
+          distills it into the seven page categories, merging into pages that already exist rather
+          than piling up duplicates. Re-ingesting an unchanged source is a no-op, because every
+          source is content-hashed in <code class="ic">.manifest.json</code>.
+        </p>
+      </div>
+      <div class="tile row-art">
+        <img src="art/ingest.webp" alt="" width="1200" height="900" loading="lazy">
+      </div>
+    </div>
 
-        <div class="agency-card">
-          <span class="agency-card-num">LAYER 03</span>
-          <h3>The Schema · Governance</h3>
-          <p><code>AGENTS.md</code>, 32 skills, and a CLI gate. Enforces written law to keep agents honest across sessions and models.</p>
-        </div>
+    <div class="row">
+      <div class="row-copy">
+        <span class="eyebrow">#4 &nbsp; Link</span>
+        <h3>The graph weaves itself</h3>
+        <p>
+          Say <i>link my pages</i> and <code class="ic">cross-linker</code> weaves missing wikilinks
+          between related pages. Ask <i>what connects X and Y</i> and <code class="ic">wiki-query</code>
+          walks typed relationship edges, multi-hop. <code class="ic">graph-query</code> answers from
+          the link index alone, without reading a single page body.
+        </p>
+      </div>
+      <div class="tile row-art">
+        <img src="art/link.webp" alt="" width="1200" height="900" loading="lazy">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <span class="eyebrow">#5 &nbsp; Verify</span>
+        <h3>The gate, not the model</h3>
+        <p>
+          <code class="ic">doctor</code> and <code class="ic">lint</code> must pass: frontmatter,
+          broken links, lifecycle states, duplicates, orphans. The gate is ordinary deterministic
+          code, so whether an operation finished is decided by a check rather than by asking the
+          model that did the work to grade itself.
+        </p>
+      </div>
+      <div class="tile row-art">
+        <img src="art/verify.webp" alt="" width="1200" height="900" loading="lazy">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <span class="eyebrow">#6 &nbsp; Own</span>
+        <h3>It is just markdown</h3>
+        <p>
+          Plain files in a git repo. No database, no embeddings, no API keys, because your agent
+          already has model access. When the tool dies you still have a folder of markdown, and
+          there is nothing to migrate.
+        </p>
+      </div>
+      <div class="tile row-art">
+        <img src="art/own.webp" alt="" width="1200" height="900" loading="lazy">
       </div>
     </div>
   </div>
 </section>
 
-<!-- #3: The DONE Contract -->
-<section id="contract">
+<section class="sec">
   <div class="wrap">
-    <div class="contract-card">
-      <span class="section-tag">03 · Deterministic Gate</span>
-      <h2 class="section-h2">The DONE Contract</h2>
-      <p style="color:var(--muted); font-size:1.1rem; max-width:640px;">
-        Agents are explicitly forbidden from grading their own homework. An operation is complete only when all six criteria hold, followed by a deterministic doctor & lint check.
+    <div class="sec-head">
+      <span class="eyebrow">A vault in use</span>
+      <h2>What it looks like<br>after a while</h2>
+    </div>
+    <!-- The counts live in the generated figcaption, never in this heading:
+         a hand-written number here would drift away from the graph beside it. -->
+    <figure class="graph">
+      <!-- graph:start (generated by scripts/graph-svg.py) -->
+      <div class="graph-body"><svg class="graph-svg" viewBox="0 0 571 628" role="img"
+     aria-label="Link graph of a working vault: 30 pages joined by 105 links." xmlns="http://www.w3.org/2000/svg">
+  <g class="graph-edges">
+    <line x1="14.0" y1="396.9" x2="227.8" y2="440.5"/>
+    <line x1="14.0" y1="396.9" x2="198.8" y2="397.2"/>
+    <line x1="157.3" y1="614.0" x2="227.8" y2="440.5"/>
+    <line x1="157.3" y1="614.0" x2="298.9" y2="535.0"/>
+    <line x1="157.3" y1="614.0" x2="76.4" y2="483.7"/>
+    <line x1="157.3" y1="614.0" x2="250.2" y2="562.8"/>
+    <line x1="157.3" y1="614.0" x2="187.8" y2="506.4"/>
+    <line x1="479.9" y1="489.7" x2="557.0" y2="397.9"/>
+    <line x1="479.9" y1="489.7" x2="413.8" y2="406.5"/>
+    <line x1="479.9" y1="489.7" x2="343.0" y2="384.3"/>
+    <line x1="479.9" y1="489.7" x2="535.8" y2="462.8"/>
+    <line x1="479.9" y1="489.7" x2="434.1" y2="564.3"/>
+    <line x1="479.9" y1="489.7" x2="299.1" y2="437.4"/>
+    <line x1="98.0" y1="541.9" x2="135.6" y2="384.5"/>
+    <line x1="98.0" y1="541.9" x2="76.4" y2="483.7"/>
+    <line x1="98.0" y1="541.9" x2="250.2" y2="562.8"/>
+    <line x1="98.0" y1="541.9" x2="242.1" y2="505.8"/>
+    <line x1="98.0" y1="541.9" x2="198.8" y2="397.2"/>
+    <line x1="227.8" y1="440.5" x2="323.0" y2="257.6"/>
+    <line x1="227.8" y1="440.5" x2="413.8" y2="406.5"/>
+    <line x1="227.8" y1="440.5" x2="298.9" y2="535.0"/>
+    <line x1="227.8" y1="440.5" x2="351.7" y2="439.7"/>
+    <line x1="227.8" y1="440.5" x2="343.0" y2="384.3"/>
+    <line x1="227.8" y1="440.5" x2="242.1" y2="505.8"/>
+    <line x1="227.8" y1="440.5" x2="210.1" y2="339.9"/>
+    <line x1="227.8" y1="440.5" x2="187.8" y2="506.4"/>
+    <line x1="227.8" y1="440.5" x2="198.8" y2="397.2"/>
+    <line x1="227.8" y1="440.5" x2="299.1" y2="437.4"/>
+    <line x1="323.0" y1="257.6" x2="135.6" y2="384.5"/>
+    <line x1="323.0" y1="257.6" x2="413.8" y2="406.5"/>
+    <line x1="323.0" y1="257.6" x2="482.0" y2="340.1"/>
+    <line x1="323.0" y1="257.6" x2="408.4" y2="28.8"/>
+    <line x1="323.0" y1="257.6" x2="343.0" y2="384.3"/>
+    <line x1="323.0" y1="257.6" x2="263.0" y2="237.5"/>
+    <line x1="323.0" y1="257.6" x2="201.3" y2="264.1"/>
+    <line x1="323.0" y1="257.6" x2="198.8" y2="397.2"/>
+    <line x1="323.0" y1="257.6" x2="299.1" y2="437.4"/>
+    <line x1="323.0" y1="257.6" x2="329.2" y2="14.0"/>
+    <line x1="323.0" y1="257.6" x2="471.3" y2="244.9"/>
+    <line x1="557.0" y1="397.9" x2="413.8" y2="406.5"/>
+    <line x1="557.0" y1="397.9" x2="482.0" y2="340.1"/>
+    <line x1="557.0" y1="397.9" x2="343.0" y2="384.3"/>
+    <line x1="557.0" y1="397.9" x2="535.8" y2="462.8"/>
+    <line x1="135.6" y1="384.5" x2="76.4" y2="483.7"/>
+    <line x1="135.6" y1="384.5" x2="270.2" y2="399.4"/>
+    <line x1="135.6" y1="384.5" x2="198.8" y2="397.2"/>
+    <line x1="135.6" y1="384.5" x2="299.1" y2="437.4"/>
+    <line x1="413.8" y1="406.5" x2="298.9" y2="535.0"/>
+    <line x1="413.8" y1="406.5" x2="351.7" y2="439.7"/>
+    <line x1="413.8" y1="406.5" x2="482.0" y2="340.1"/>
+    <line x1="413.8" y1="406.5" x2="384.5" y2="298.6"/>
+    <line x1="413.8" y1="406.5" x2="535.8" y2="462.8"/>
+    <line x1="413.8" y1="406.5" x2="434.1" y2="564.3"/>
+    <line x1="413.8" y1="406.5" x2="198.8" y2="397.2"/>
+    <line x1="413.8" y1="406.5" x2="471.3" y2="244.9"/>
+    <line x1="298.9" y1="535.0" x2="242.1" y2="505.8"/>
+    <line x1="298.9" y1="535.0" x2="210.1" y2="339.9"/>
+    <line x1="298.9" y1="535.0" x2="299.1" y2="437.4"/>
+    <line x1="351.7" y1="439.7" x2="343.0" y2="384.3"/>
+    <line x1="351.7" y1="439.7" x2="384.5" y2="298.6"/>
+    <line x1="351.7" y1="439.7" x2="242.1" y2="505.8"/>
+    <line x1="351.7" y1="439.7" x2="210.1" y2="339.9"/>
+    <line x1="351.7" y1="439.7" x2="299.1" y2="437.4"/>
+    <line x1="482.0" y1="340.1" x2="535.8" y2="462.8"/>
+    <line x1="482.0" y1="340.1" x2="270.2" y2="399.4"/>
+    <line x1="76.4" y1="483.7" x2="270.2" y2="399.4"/>
+    <line x1="76.4" y1="483.7" x2="198.8" y2="397.2"/>
+    <line x1="408.4" y1="28.8" x2="329.2" y2="14.0"/>
+    <line x1="343.0" y1="384.3" x2="384.5" y2="298.6"/>
+    <line x1="343.0" y1="384.3" x2="535.8" y2="462.8"/>
+    <line x1="343.0" y1="384.3" x2="250.2" y2="562.8"/>
+    <line x1="343.0" y1="384.3" x2="263.0" y2="237.5"/>
+    <line x1="343.0" y1="384.3" x2="201.3" y2="264.1"/>
+    <line x1="343.0" y1="384.3" x2="242.1" y2="505.8"/>
+    <line x1="343.0" y1="384.3" x2="270.2" y2="399.4"/>
+    <line x1="343.0" y1="384.3" x2="210.1" y2="339.9"/>
+    <line x1="343.0" y1="384.3" x2="187.8" y2="506.4"/>
+    <line x1="343.0" y1="384.3" x2="198.8" y2="397.2"/>
+    <line x1="343.0" y1="384.3" x2="299.1" y2="437.4"/>
+    <line x1="343.0" y1="384.3" x2="471.3" y2="244.9"/>
+    <line x1="384.5" y1="298.6" x2="263.0" y2="237.5"/>
+    <line x1="384.5" y1="298.6" x2="270.2" y2="399.4"/>
+    <line x1="535.8" y1="462.8" x2="434.1" y2="564.3"/>
+    <line x1="250.2" y1="562.8" x2="242.1" y2="505.8"/>
+    <line x1="250.2" y1="562.8" x2="270.2" y2="399.4"/>
+    <line x1="250.2" y1="562.8" x2="187.8" y2="506.4"/>
+    <line x1="250.2" y1="562.8" x2="434.1" y2="564.3"/>
+    <line x1="250.2" y1="562.8" x2="198.8" y2="397.2"/>
+    <line x1="263.0" y1="237.5" x2="201.3" y2="264.1"/>
+    <line x1="263.0" y1="237.5" x2="210.1" y2="339.9"/>
+    <line x1="263.0" y1="237.5" x2="198.8" y2="397.2"/>
+    <line x1="201.3" y1="264.1" x2="75.9" y2="172.0"/>
+    <line x1="201.3" y1="264.1" x2="210.1" y2="339.9"/>
+    <line x1="201.3" y1="264.1" x2="198.8" y2="397.2"/>
+    <line x1="201.3" y1="264.1" x2="299.1" y2="437.4"/>
+    <line x1="75.9" y1="172.0" x2="210.1" y2="339.9"/>
+    <line x1="242.1" y1="505.8" x2="270.2" y2="399.4"/>
+    <line x1="242.1" y1="505.8" x2="187.8" y2="506.4"/>
+    <line x1="242.1" y1="505.8" x2="198.8" y2="397.2"/>
+    <line x1="242.1" y1="505.8" x2="299.1" y2="437.4"/>
+    <line x1="270.2" y1="399.4" x2="299.1" y2="437.4"/>
+    <line x1="210.1" y1="339.9" x2="187.8" y2="506.4"/>
+    <line x1="187.8" y1="506.4" x2="299.1" y2="437.4"/>
+    <line x1="434.1" y1="564.3" x2="299.1" y2="437.4"/>
+    <line x1="198.8" y1="397.2" x2="299.1" y2="437.4"/>
+  </g>
+  <g class="graph-nodes">
+    <circle cx="14.0" cy="396.9" r="3.9"/>
+    <circle cx="157.3" cy="614.0" r="5.0"/>
+    <circle cx="479.9" cy="489.7" r="5.3"/>
+    <circle cx="98.0" cy="541.9" r="5.0"/>
+    <circle cx="227.8" cy="440.5" r="6.9"/>
+    <circle cx="323.0" cy="257.6" r="6.9"/>
+    <circle cx="557.0" cy="397.9" r="5.0"/>
+    <circle cx="135.6" cy="384.5" r="5.3"/>
+    <circle cx="413.8" cy="406.5" r="6.9"/>
+    <circle cx="298.9" cy="535.0" r="5.3"/>
+    <circle cx="351.7" cy="439.7" r="5.6"/>
+    <circle cx="482.0" cy="340.1" r="5.0"/>
+    <circle cx="76.4" cy="483.7" r="5.0"/>
+    <circle cx="408.4" cy="28.8" r="3.9"/>
+    <circle cx="343.0" cy="384.3" r="8.0"/>
+    <circle cx="384.5" cy="298.6" r="5.0"/>
+    <circle cx="535.8" cy="462.8" r="5.3"/>
+    <circle cx="250.2" cy="562.8" r="5.9"/>
+    <circle cx="263.0" cy="237.5" r="5.3"/>
+    <circle cx="201.3" cy="264.1" r="5.6"/>
+    <circle cx="75.9" cy="172.0" r="3.9"/>
+    <circle cx="242.1" cy="505.8" r="6.4"/>
+    <circle cx="270.2" cy="399.4" r="5.9"/>
+    <circle cx="210.1" cy="339.9" r="5.9"/>
+    <circle cx="187.8" cy="506.4" r="5.6"/>
+    <circle cx="434.1" cy="564.3" r="5.0"/>
+    <circle cx="198.8" cy="397.2" r="7.1"/>
+    <circle cx="299.1" cy="437.4" r="7.1"/>
+    <circle cx="329.2" cy="14.0" r="3.9"/>
+    <circle cx="471.3" cy="244.9" r="4.3"/>
+  </g>
+</svg></div>
+      <figcaption>
+        30 pages and the 105 links between them, drawn from a real vault.
+        Every edge was written by an agent and is readable as plain markdown.
+      </figcaption>
+      <!-- graph:end -->
+    </figure>
+  </div>
+</section>
+
+<section class="sec" id="rag">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Compared to RAG</span>
+      <h2>Same documents,<br>different artifact</h2>
+      <p class="sub">
+        Both read your documents. They differ in when the work happens and what is left behind
+        afterwards.
+      </p>
+    </div>
+
+    <div class="table-scroll">
+      <table class="spec">
+        <thead>
+          <tr>
+            <th scope="col">Dimension</th>
+            <th scope="col">Typical RAG or notes chatbot</th>
+            <th scope="col" class="mine">llm-wiki</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">When work happens</th>
+            <td>At query time, every time</td>
+            <td class="mine">Once, at ingest. Results are reused forever</td>
+          </tr>
+          <tr>
+            <th scope="row">What you get</th>
+            <td>An answer you cannot inspect</td>
+            <td class="mine">Markdown pages you can read, edit, and diff</td>
+          </tr>
+          <tr>
+            <th scope="row">Storage</th>
+            <td>Vector DB, embeddings, an index</td>
+            <td class="mine">Plain files in a git repo. No database</td>
+          </tr>
+          <tr>
+            <th scope="row">Duplicates</th>
+            <td>Near-duplicate chunks pile up</td>
+            <td class="mine">Law 6: one concept, one page. New info merges in</td>
+          </tr>
+          <tr>
+            <th scope="row">Hallucination</th>
+            <td>Invisible, mixed into prose</td>
+            <td class="mine">Marked inline: <code class="ic">^[inferred]</code>, <code class="ic">^[ambiguous]</code></td>
+          </tr>
+          <tr>
+            <th scope="row">Trust</th>
+            <td>"The model said so"</td>
+            <td class="mine">Deterministic gate: <code class="ic">doctor</code> and <code class="ic">lint</code> must pass</td>
+          </tr>
+          <tr>
+            <th scope="row">Lock-in</th>
+            <td>Rebuild when the tool dies</td>
+            <td class="mine">It is a folder of markdown. Nothing to migrate</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="contract">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The DONE contract</span>
+      <h2>Agents do not grade<br>their own homework</h2>
+      <p class="sub">
+        A write operation is finished only when all six conditions below hold, and the last one is
+        checked by a program rather than by the model that did the work.
+      </p>
+    </div>
+
+    <div class="done-grid">
+      <div class="done-item">
+        <span class="done-n">01</span>
+        <h3>Full frontmatter</h3>
+        <p>Every page carries the complete schema plus wikilinks to related pages.</p>
+      </div>
+      <div class="done-item">
+        <span class="done-n">02</span>
+        <h3>Manifest updated</h3>
+        <p><code class="ic">.manifest.json</code> records every source touched, with the pages it produced.</p>
+      </div>
+      <div class="done-item">
+        <span class="done-n">03</span>
+        <h3>Operation logged</h3>
+        <p><code class="ic">log.md</code> gains one ISO-8601 UTC line naming the agent and the operation.</p>
+      </div>
+      <div class="done-item">
+        <span class="done-n">04</span>
+        <h3>Hot list refreshed</h3>
+        <p><code class="ic">hot.md</code> summarises what changed in a single line.</p>
+      </div>
+      <div class="done-item">
+        <span class="done-n">05</span>
+        <h3>Index reconciled</h3>
+        <p><code class="ic">index.md</code> lists every page exactly once, with a summary and tags.</p>
+      </div>
+      <div class="done-item">
+        <span class="done-n">06</span>
+        <h3>Deterministic gate</h3>
+        <p><code class="ic">llm-wiki doctor</code> passes and <code class="ic">lint</code> reports zero fail-level findings.</p>
+      </div>
+    </div>
+
+    <div class="laws-head">
+      <h3>Five of the eleven laws</h3>
+      <span>Numbered as they appear in <code class="ic">AGENTS.md</code></span>
+    </div>
+    <ul class="laws">
+      <li class="law">
+        <span class="law-n">LAW 1</span>
+        <span><b>Never delete a wiki page.</b> Supersede it: set <code class="ic">lifecycle: archived</code> and point <code class="ic">superseded_by:</code> at the successor.</span>
+      </li>
+      <li class="law">
+        <span class="law-n">LAW 2</span>
+        <span><b>Never modify anything inside <code class="ic">_inbox/</code>.</b> Layer-1 sources are immutable ground truth.</span>
+      </li>
+      <li class="law">
+        <span class="law-n">LAW 5</span>
+        <span><b>Never present a synthesized claim as extracted.</b> Inferences are marked <code class="ic">^[inferred]</code> and contested claims <code class="ic">^[ambiguous]</code>.</span>
+      </li>
+      <li class="law">
+        <span class="law-n">LAW 6</span>
+        <span><b>Never create a page for a concept that already has one.</b> One concept, one page. New information merges into the existing page.</span>
+      </li>
+      <li class="law">
+        <span class="law-n">LAW 10</span>
+        <span><b>Never set <code class="ic">lifecycle</code> above <code class="ic">draft</code>.</b> Promotion to <code class="ic">reviewed</code> or <code class="ic">verified</code> is a human-only transition.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" id="skills">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The toolkit</span>
+      <h2>32 skills and a CLI<br>that does the counting</h2>
+      <p class="sub">
+        Skills are plain <code class="ic">SKILL.md</code> files in <code class="ic">skills/</code>, so you
+        can read them, fork them, and extend them. The CLI handles everything deterministic, which
+        keeps the model out of questions that have exact answers.
+      </p>
+    </div>
+
+    <div class="skill-groups">
+      <div class="skill-group">
+        <h4>Ingest and capture</h4>
+        <div class="pills">
+          <span class="pill">wiki-ingest</span>
+          <span class="pill">wiki-capture</span>
+          <span class="pill">wiki-import</span>
+          <span class="pill">wiki-research</span>
+          <span class="pill">wiki-history-ingest</span>
+          <span class="pill">claude-history-ingest</span>
+          <span class="pill">hermes-history-ingest</span>
+          <span class="pill">wiki-agent</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h4>Query and synthesize</h4>
+        <div class="pills">
+          <span class="pill">wiki-query</span>
+          <span class="pill">wiki-synthesize</span>
+          <span class="pill">wiki-digest</span>
+          <span class="pill">wiki-context-pack</span>
+          <span class="pill">wiki-export</span>
+          <span class="pill">memory-bridge</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h4>Maintain and repair</h4>
+        <div class="pills">
+          <span class="pill">wiki-lint</span>
+          <span class="pill">cross-linker</span>
+          <span class="pill">wiki-dedup</span>
+          <span class="pill">wiki-update</span>
+          <span class="pill">daily-update</span>
+          <span class="pill">wiki-rebuild</span>
+          <span class="pill">tag-taxonomy</span>
+          <span class="pill">wiki-stage-commit</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h4>Set up and surface</h4>
+        <div class="pills">
+          <span class="pill">llm-wiki</span>
+          <span class="pill">wiki-setup</span>
+          <span class="pill">wiki-switch</span>
+          <span class="pill">wiki-status</span>
+          <span class="pill">wiki-dashboard</span>
+          <span class="pill">graph-colorize</span>
+          <span class="pill">obsidian-layout-adjustment</span>
+          <span class="pill">skill-creator</span>
+          <span class="pill">vault-skill-factory</span>
+          <span class="pill">impl-validator</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cli" id="cli">
+      <h3 class="cli-title">The CLI</h3>
+      <p class="sub">
+        Roughly 2,900 lines of Python, standard library only. Fourteen commands, no API keys.
       </p>
 
-      <div class="contract-grid">
-        <div class="contract-item">
-          <div class="contract-item-check">✓ 01</div>
-          <h4>Full Frontmatter</h4>
-          <p>Pages written with complete YAML schema and wikilinks to related pages.</p>
-        </div>
-        <div class="contract-item">
-          <div class="contract-item-check">✓ 02</div>
-          <h4>Manifest Registry</h4>
-          <p><code>.manifest.json</code> updated for every source file ingested.</p>
-        </div>
-        <div class="contract-item">
-          <div class="contract-item-check">✓ 03</div>
-          <h4>Operation Log</h4>
-          <p><code>log.md</code> appended with ISO-8601Z timestamped agent action entry.</p>
-        </div>
-        <div class="contract-item">
-          <div class="contract-item-check">✓ 04</div>
-          <h4>Hot List Summary</h4>
-          <p><code>hot.md</code> refreshed with a concise update of modified concepts.</p>
-        </div>
-        <div class="contract-item">
-          <div class="contract-item-check">✓ 05</div>
-          <h4>Index Reconciled</h4>
-          <p><code>index.md</code> updated so every page is referenced exactly once.</p>
-        </div>
-        <div class="contract-item">
-          <div class="contract-item-check">✓ 06</div>
-          <h4>Deterministic Gate</h4>
-          <p><code>llm-wiki doctor</code> passes and <code>llm-wiki lint</code> reports 0 fail findings.</p>
-        </div>
-      </div>
     </div>
   </div>
 </section>
 
-<!-- vs RAG Comparison -->
-<section id="rag">
-  <div class="wrap">
-    <span class="section-tag">04 · Paradigm Comparison</span>
-    <h2 class="section-h2">Compared to RAG</h2>
-    <p class="section-sub">
-      Both process your documents. They differ in when the work happens and what artifact is produced.
-    </p>
+</main>
 
-    <div class="table-box">
-      <div class="tbl-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Typical RAG</th>
-              <th>llm-wiki</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Execution Phase</td>
-              <td class="val-no">Query time (every question)</td>
-              <td class="val-yes">Ingest time (compiled once)</td>
-            </tr>
-            <tr>
-              <td>Storage Format</td>
-              <td class="val-no">Opaque Vector DB embeddings</td>
-              <td class="val-yes">Plain Markdown files in Git</td>
-            </tr>
-            <tr>
-              <td>Duplicates</td>
-              <td class="val-no">Near-duplicate chunks pile up</td>
-              <td class="val-yes">One concept, one page (merged)</td>
-            </tr>
-            <tr>
-              <td>Uncertainty Claim</td>
-              <td class="val-no">Swallowed in prose</td>
-              <td class="val-yes">Marked <code>^[inferred]</code> explicitly</td>
-            </tr>
-            <tr>
-              <td>Verification Gate</td>
-              <td class="val-no">Model self-assessment</td>
-              <td class="val-yes">Deterministic CLI doctor gate</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- #4: 32 Agent Skills Matrix -->
-<section id="skills">
-  <div class="wrap">
-    <span class="section-tag">05 · Capabilities</span>
-    <h2 class="section-h2">32 Modular Agent Skills</h2>
-    <p class="section-sub">
-      Skills live as plain <code>SKILL.md</code> files in <code>skills/</code> — read them, fork them, and extend them.
-    </p>
-
-    <div class="skills-matrix">
-      <div class="skills-domain">
-        <div class="domain-title">📥 Ingest & Capture</div>
-        <div class="domain-tags">
-          <span class="domain-tag">wiki-ingest</span>
-          <span class="domain-tag">wiki-capture</span>
-          <span class="domain-tag">wiki-import</span>
-          <span class="domain-tag">wiki-research</span>
-          <span class="domain-tag">claude-history-ingest</span>
-          <span class="domain-tag">hermes-history-ingest</span>
-        </div>
-      </div>
-
-      <div class="skills-domain">
-        <div class="domain-title">🧠 Query & Synthesize</div>
-        <div class="domain-tags">
-          <span class="domain-tag">wiki-query</span>
-          <span class="domain-tag">wiki-digest</span>
-          <span class="domain-tag">wiki-context-pack</span>
-          <span class="domain-tag">wiki-export</span>
-          <span class="domain-tag">wiki-synthesize</span>
-          <span class="domain-tag">wiki-agent</span>
-        </div>
-      </div>
-
-      <div class="skills-domain">
-        <div class="domain-title">🔧 Maintenance & Repair</div>
-        <div class="domain-tags">
-          <span class="domain-tag">wiki-lint</span>
-          <span class="domain-tag">cross-linker</span>
-          <span class="domain-tag">wiki-dedup</span>
-          <span class="domain-tag">wiki-update</span>
-          <span class="domain-tag">daily-update</span>
-          <span class="domain-tag">wiki-rebuild</span>
-          <span class="domain-tag">tag-taxonomy</span>
-        </div>
-      </div>
-
-      <div class="skills-domain">
-        <div class="domain-title">🏗️ Core & Setup</div>
-        <div class="domain-tags">
-          <span class="domain-tag">llm-wiki</span>
-          <span class="domain-tag">wiki-setup</span>
-          <span class="domain-tag">wiki-switch</span>
-          <span class="domain-tag">wiki-status</span>
-          <span class="domain-tag">impl-validator</span>
-          <span class="domain-tag">vault-skill-factory</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- #5: Zero-Dependency Python CLI Reference -->
-<section id="cli">
-  <div class="wrap">
-    <span class="section-tag">06 · Command Line</span>
-    <h2 class="section-h2">Zero-Dependency Python CLI</h2>
-    <p class="section-sub">
-      A ~2,600 line standard-library CLI handling deterministic operations so you never rely on LLMs for system state.
-    </p>
-
-    <div class="table-box">
-      <div class="tbl-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Command</th>
-              <th>Purpose</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>llm-wiki setup --vault PATH</code></td>
-              <td>Links skills into detected agent directories (~/.claude, ~/.hermes)</td>
-            </tr>
-            <tr>
-              <td><code>llm-wiki doctor [--strict]</code></td>
-              <td>Health-checks config, vault shape, and installed agent skills</td>
-            </tr>
-            <tr>
-              <td><code>llm-wiki lint [VAULT] --json</code></td>
-              <td>Audits frontmatter, broken wikilinks, duplicate titles, and orphans</td>
-            </tr>
-            <tr>
-              <td><code>llm-wiki graph-analyse VAULT</code></td>
-              <td>Analyzes graph topology for hub nodes, communities, and bridges</td>
-            </tr>
-            <tr>
-              <td><code>llm-wiki ast-extract PATH</code></td>
-              <td>Extracts code AST structures (classes, functions, imports) without LLM calls</td>
-            </tr>
-            <tr>
-              <td><code>llm-wiki pdf-extract PDF</code></td>
-              <td>Extracts text layer and OCR from PDFs with PyMuPDF</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Constitution Laws -->
-<section id="constitution">
-  <div class="wrap">
-    <span class="section-tag">07 · Governance</span>
-    <h2 class="section-h2">Laws, Not Tips</h2>
-    <p class="section-sub">
-      Prompt instructions vanish across sessions. A file in the repo persists. <code>AGENTS.md</code> defines written law for every skill.
-    </p>
-
-    <div class="laws-stack">
-      <div class="law-card">
-        <span class="law-num">LAW 01</span>
-        <div><b>Never delete a wiki page.</b> Supersede it: set <code>lifecycle: archived</code> and <code>superseded_by:</code>.</div>
-      </div>
-      <div class="law-card">
-        <span class="law-num">LAW 02</span>
-        <div><b>Never modify anything in <code>_inbox/</code>.</b> Layer 1 sources are immutable ground truth.</div>
-      </div>
-      <div class="law-card">
-        <span class="law-num">LAW 03</span>
-        <div><b>Never present a synthesized claim as extracted.</b> Mark it <code>^[inferred]</code>.</div>
-      </div>
-      <div class="law-card">
-        <span class="law-num">LAW 04</span>
-        <div><b>Never create duplicate pages for existing concepts.</b> One concept, one page — merge.</div>
-      </div>
-      <div class="law-card">
-        <span class="law-num">LAW 05</span>
-        <div><b>Never set <code>lifecycle</code> above  draft</b> on writes. <code>reviewed</code> / <code>verified</code> are human-only.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Getting Started -->
-<section id="getting-started">
-  <div class="wrap">
-    <span class="section-tag">08 · Deployment</span>
-    <h2 class="section-h2">Getting Started</h2>
-    <p class="section-sub">Zero external dependencies. Requires Python 3.10+ and an agent interface.</p>
-
-<pre style="background:var(--code-bg); padding:20px 24px; border-radius:18px; border:1px solid var(--border); font-family:var(--font-mono); font-size:0.9rem; overflow-x:auto;">
-<code>git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki
-pip install -e ~/Projects/llm-wiki
-llm-wiki setup --vault /path/to/your/vault</code>
-</pre>
-  </div>
-</section>
-
-<!-- Footer -->
 <footer>
-  <div class="wrap footer-flex">
-    <div>MIT Licensed · Built for Obsidian · <a href="https://github.com/chobizzy/llm-wiki" target="_blank">GitHub Repository</a></div>
-    <div>Distilled Knowledge Architecture</div>
+  <div class="wrap footer-inner">
+    <span>MIT licensed &middot; built for Obsidian</span>
+    <span>Illustrations generated &middot; graph drawn from a real vault</span>
+    <span><a href="https://github.com/chobizzy/llm-wiki">github.com/chobizzy/llm-wiki</a></span>
   </div>
 </footer>
 
-<!-- JavaScript Logic -->
 <script>
-  // Theme Toggle
-  const themeBtn = document.getElementById('theme-toggle');
-  function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-  }
-  themeBtn.addEventListener('click', toggleTheme);
-  const saved = localStorage.getItem('theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', saved);
+  (function () {
+    var copyBtn = document.getElementById('copy-btn');
+    var installCmd = document.getElementById('install-cmd');
 
-  function copyCmd() {
-    navigator.clipboard.writeText('pip install -e . && llm-wiki setup --vault ~/Vault');
-    const btn = document.querySelector('.copy-btn');
-    btn.textContent = 'Copied';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
-  }
+    copyBtn.addEventListener('click', function () {
+      // The rendered text carries the "$ " prompts, which are not part of the command.
+      var text = installCmd.innerText.replace(/^\$ /gm, '').trim();
+      var done = function (label) {
+        copyBtn.textContent = label;
+        setTimeout(function () { copyBtn.textContent = 'Copy'; }, 2000);
+      };
+      if (!navigator.clipboard) {
+        done('Select and copy');
+        return;
+      }
+      navigator.clipboard.writeText(text).then(
+        function () { done('Copied'); },
+        function () { done('Copy failed'); }
+      );
+    });
+  })();
 </script>
 
 </body>
