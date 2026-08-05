@@ -139,12 +139,16 @@ def _filter_unchanged(
 ) -> tuple[list[dict], int]:
     """Remove files whose hash matches the manifest. Returns (to_ingest, skipped_count)."""
     try:
-        from llm_wiki.cache import check_sources, compute_hash
+        from llm_wiki.cache import ManifestError, check_sources, compute_hash
         paths = [Path(f["path"]) for f in files]
         result = check_sources(vault, paths)
         unchanged_set = set(result["unchanged"])
         to_ingest = [f for f in files if f["path"] not in unchanged_set]
         return to_ingest, len(unchanged_set)
+    except ManifestError:
+        # A damaged ledger must stop the plan. Falling through to "ingest
+        # everything" here would look like a normal first run of a big folder.
+        raise
     except Exception:
         return files, 0
 

@@ -412,7 +412,7 @@ llm-wiki cache-update "$OBSIDIAN_VAULT_PATH" <source> \
 
 Pass vault-relative page paths. Give `--created` the pages this ingest brought into existence and `--updated` the ones it merged into — the same split you report in `log.md`. Pass an empty list (`--created` with no values) when a side is empty. The command creates the manifest if it doesn't exist and leaves unrelated top-level keys untouched.
 
-**Fallback** (if `llm-wiki` is not installed): write the entry by hand under `sources`, keyed by the source's absolute path, with `content_hash` (SHA-256 of the file contents), `last_ingested` (ISO-8601 UTC), `pages_created`, and `pages_updated`. `content_hash` is the primary skip signal on subsequent runs — never omit it.
+**Fallback** (if `llm-wiki` is not installed): write the entry by hand under `sources`, keyed by the source's absolute path, with `content_hash` (SHA-256 of the file contents), `ingested_at` (ISO-8601 UTC), `pages_created`, and `pages_updated`. `content_hash` is the primary skip signal on subsequent runs — never omit it.
 
 **`index.md`** — Add entries for any new pages, update summaries for modified pages.
 

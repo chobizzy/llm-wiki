@@ -12,8 +12,9 @@ Two commands:
         Merge keys that expand to the same absolute path.
 
     manifest.py delta VAULT --scan GLOB [--scan GLOB ...] [--skip a,b]
-        Report which scanned sources are new, modified, touched or unchanged,
-        comparing against canonicalised manifest keys.
+        Report which scanned sources are new, modified or unchanged. Adds glob
+        scanning and skip handling on top of `llm-wiki cache-check`, which does
+        the classifying — see llm_wiki/cache.py.
 
 Both expand `~` and environment variables before comparing, which is the whole
 point: an agent that skips that step re-ingests files it already has.
@@ -32,40 +33,34 @@ import os
 import sys
 from pathlib import Path
 
-# Hashing lives in llm_wiki.cache; reimplementing it here would let the two
-# drift and disagree about whether a source changed.
+# The schema — key form, timestamp field, classification — lives in
+# llm_wiki.cache. Reimplementing any of it here would let the two drift and
+# disagree about whether a source needs re-ingesting.
 try:
-    from llm_wiki.cache import compute_hash
+    from llm_wiki.cache import (
+        ManifestError, canonical_key, check_sources, entry_time, read_manifest_doc,
+    )
 except ImportError:  # not pip-installed — fall back to the adjacent package
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from llm_wiki.cache import compute_hash
+    from llm_wiki.cache import (
+        ManifestError, canonical_key, check_sources, entry_time, read_manifest_doc,
+    )
 
 MANIFEST_NAME = ".manifest.json"
 
-# wiki-status/SKILL.md documents `ingested_at`; llm_wiki.cache writes
-# `last_ingested`. Both exist in real vaults, so read either and never assume.
-TIME_KEYS = ("ingested_at", "last_ingested")
 PAGE_KEYS = ("pages_created", "pages_updated", "pages_produced")
 
 
-def canonical(raw: str) -> str:
-    """Expand ~ and env vars, then absolutise. The one true key form."""
-    return os.path.abspath(os.path.expandvars(os.path.expanduser(str(raw))))
-
-
 def load_manifest(vault: Path) -> dict:
-    """Return the whole manifest document, or an empty skeleton."""
-    path = vault / MANIFEST_NAME
-    if not path.exists():
-        return {"sources": {}}
+    """Return the whole manifest document, or an empty skeleton.
+
+    Parsing lives in llm_wiki.cache. This only translates its failure into the
+    SystemExit this script exits with everywhere else.
+    """
     try:
-        doc = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise SystemExit(f"error: {path} is not valid JSON: {exc}")
-    except OSError as exc:
-        raise SystemExit(f"error: cannot read {path}: {exc}")
-    if not isinstance(doc, dict):
-        raise SystemExit(f"error: {path} must contain a JSON object")
+        doc = read_manifest_doc(vault)
+    except ManifestError as exc:
+        raise SystemExit(f"error: {exc}")
     doc.setdefault("sources", {})
     return doc
 
@@ -76,12 +71,6 @@ def save_manifest(vault: Path, doc: dict) -> None:
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
     os.replace(tmp, path)
-
-
-def entry_time(entry: dict) -> str:
-    """Newest timestamp on an entry under any spelling. Empty string if none."""
-    stamps = [str(entry[k]) for k in TIME_KEYS if entry.get(k)]
-    return max(stamps) if stamps else ""
 
 
 def merge_entries(entries: list[dict]) -> dict:
@@ -104,7 +93,7 @@ def normalize_sources(sources: dict) -> tuple[dict, list[dict]]:
     """Rekey every source canonically. Returns (new_sources, collisions)."""
     grouped: dict[str, list[tuple[str, dict]]] = {}
     for raw_key, entry in sources.items():
-        grouped.setdefault(canonical(raw_key), []).append((raw_key, entry))
+        grouped.setdefault(canonical_key(raw_key), []).append((raw_key, entry))
 
     normalized: dict[str, dict] = {}
     collisions: list[dict] = []
@@ -118,7 +107,7 @@ def normalize_sources(sources: dict) -> tuple[dict, list[dict]]:
 
 
 def cmd_normalize(args: argparse.Namespace) -> int:
-    vault = Path(canonical(args.vault))
+    vault = Path(canonical_key(args.vault))
     if not vault.is_dir():
         raise SystemExit(f"error: vault not found: {vault}")
 
@@ -126,7 +115,7 @@ def cmd_normalize(args: argparse.Namespace) -> int:
     before = doc["sources"]
     after, collisions = normalize_sources(before)
 
-    rekeyed = sum(1 for k in before if k != canonical(k))
+    rekeyed = sum(1 for k in before if k != canonical_key(k))
     print(f"manifest : {vault / MANIFEST_NAME}")
     print(f"entries  : {len(before)} -> {len(after)}")
     print(f"rekeyed  : {rekeyed}")
@@ -155,7 +144,7 @@ def expand_scan(patterns: list[str], skips: list[str]) -> list[Path]:
     for pattern in patterns:
         expanded = os.path.expandvars(os.path.expanduser(pattern))
         for hit in glob.glob(expanded, recursive=True):
-            path = canonical(hit)
+            path = canonical_key(hit)
             if any(skip and skip in path for skip in skips):
                 continue
             if os.path.isfile(path):
@@ -163,34 +152,8 @@ def expand_scan(patterns: list[str], skips: list[str]) -> list[Path]:
     return [Path(p) for p in sorted(found)]
 
 
-def classify(path: Path, entry: dict | None) -> str:
-    """new / modified / touched / unchanged for one scanned source.
-
-    'touched' means the file's mtime moved but its content hash did not, which
-    is the case worth reporting separately: re-ingesting it would burn tokens
-    to produce identical pages.
-    """
-    if entry is None:
-        return "new"
-    stamp = entry_time(entry)
-    recorded = entry.get("content_hash")
-    if recorded:
-        return "unchanged" if compute_hash(path) == recorded else "modified"
-    # No hash on the entry (older manifest): mtime is all there is to go on.
-    if not stamp:
-        return "modified"
-    mtime = _iso_mtime(path)
-    return "touched" if mtime > stamp else "unchanged"
-
-
-def _iso_mtime(path: Path) -> str:
-    from datetime import datetime, timezone
-
-    return datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
-
-
 def cmd_delta(args: argparse.Namespace) -> int:
-    vault = Path(canonical(args.vault))
+    vault = Path(canonical_key(args.vault))
     if not vault.is_dir():
         raise SystemExit(f"error: vault not found: {vault}")
 
@@ -205,26 +168,24 @@ def cmd_delta(args: argparse.Namespace) -> int:
             "the shell does not expand it first."
         )
 
-    # Canonical lookup: the manifest on disk may still hold ~-relative keys.
-    sources = {canonical(k): v for k, v in load_manifest(vault)["sources"].items()}
-    buckets: dict[str, list[str]] = {
-        "new": [], "modified": [], "touched": [], "unchanged": []
-    }
-    for path in paths:
-        buckets[classify(path, sources.get(str(path)))].append(str(path))
+    # check_sources is the one classifier; this command only decides *which*
+    # files to hand it. It canonicalises manifest keys on lookup, so a vault
+    # still holding ~-relative keys resolves correctly here too.
+    buckets = check_sources(vault, paths)
 
     if args.json:
         print(json.dumps(buckets, indent=2))
         return 0
 
     print(f"scanned  : {len(paths)} file(s)")
-    for name in ("new", "modified", "touched", "unchanged"):
+    for name in ("new", "modified", "unchanged"):
         print(f"{name:9}: {len(buckets[name])}")
     for name in ("new", "modified"):
         for item in buckets[name]:
             print(f"  {name:8} {item}")
-    if buckets["touched"]:
-        print("\ntouched files have a newer mtime but identical content; skip them.")
+    if buckets["missing"]:
+        print(f"\n{len(buckets['missing'])} manifest entr(ies) no longer on disk "
+              f"(outside this scan); `normalize` does not remove them.")
     return 0
 
 
@@ -251,7 +212,10 @@ def main() -> int:
     delta.set_defaults(func=cmd_delta)
 
     args = parser.parse_args()
-    return args.func(args)
+    try:
+        return args.func(args)
+    except ManifestError as exc:  # raised from inside check_sources
+        raise SystemExit(f"error: {exc}")
 
 
 if __name__ == "__main__":

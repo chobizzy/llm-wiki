@@ -24,6 +24,8 @@ You are computing the current state of the wiki: what's been ingested, what's ne
 The manifest lives at `$OBSIDIAN_VAULT_PATH/.manifest.json`. It tracks every source file that has been ingested. If it doesn't exist, this is a fresh vault with nothing ingested.
 
 > **Source keys are canonical absolute paths** (`~` and env vars expanded). Never mix `~`-relative and absolute keys — the same file would be tracked twice and re-ingested. See `llm-wiki/SKILL.md` → `.manifest.json`. Repair a mixed manifest with `scripts/manifest.py normalize <vault>`.
+>
+> **A source entry's ingest timestamp is `ingested_at`.** Older vaults spell it `last_ingested`; that name is still read, but `llm-wiki cache-update` rewrites it to `ingested_at` the next time the source is ingested. Don't write the old name. (The `projects` and `hermes` summary blocks below have their own `last_ingested` field — that one is unrelated and stays.)
 
 ```json
 {

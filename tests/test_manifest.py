@@ -10,12 +10,16 @@ Stdlib unittest only. Run: python -m unittest discover tests -v
 
 from __future__ import annotations
 
+import argparse
+import contextlib
 import importlib.util
+import io
 import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
+
+from llm_wiki.cache import check_sources, compute_hash, update_source
 
 # scripts/ is not a package, so load the module by path.
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "manifest.py"
@@ -25,29 +29,20 @@ _spec.loader.exec_module(manifest)
 
 
 class CanonicalTests(unittest.TestCase):
-    def test_expands_user_and_absolutises(self) -> None:
-        got = manifest.canonical("~/notes/a.md")
-        self.assertTrue(os.path.isabs(got))
-        self.assertNotIn("~", got)
+    """canonical_key and entry_time are llm_wiki.cache's; covered in test_cache.
 
-    def test_already_canonical_is_stable(self) -> None:
-        once = manifest.canonical("~/notes/a.md")
-        self.assertEqual(once, manifest.canonical(once))
+    These only pin that the script uses the shared helpers rather than its own.
+    """
 
+    def test_uses_the_shared_canonical_key(self) -> None:
+        from llm_wiki.cache import canonical_key
 
-class EntryTimeTests(unittest.TestCase):
-    def test_reads_either_spelling(self) -> None:
-        self.assertEqual(
-            manifest.entry_time({"ingested_at": "2026-01-01T00:00:00Z"}),
-            "2026-01-01T00:00:00Z",
-        )
-        self.assertEqual(
-            manifest.entry_time({"last_ingested": "2026-02-02T00:00:00Z"}),
-            "2026-02-02T00:00:00Z",
-        )
+        self.assertIs(manifest.canonical_key, canonical_key)
 
-    def test_missing_timestamp_is_empty_not_error(self) -> None:
-        self.assertEqual(manifest.entry_time({}), "")
+    def test_uses_the_shared_entry_time(self) -> None:
+        from llm_wiki.cache import entry_time
+
+        self.assertIs(manifest.entry_time, entry_time)
 
 
 class MergeTests(unittest.TestCase):
@@ -85,7 +80,7 @@ class MergeTests(unittest.TestCase):
 
 class NormalizeSourcesTests(unittest.TestCase):
     def test_tilde_and_absolute_forms_collapse_to_one(self) -> None:
-        absolute = manifest.canonical("~/.claude/projects/x.jsonl")
+        absolute = manifest.canonical_key("~/.claude/projects/x.jsonl")
         sources = {
             "~/.claude/projects/x.jsonl": {
                 "ingested_at": "2026-01-01T00:00:00Z",
@@ -110,8 +105,8 @@ class NormalizeSourcesTests(unittest.TestCase):
 
     def test_distinct_sources_are_not_merged(self) -> None:
         sources = {
-            manifest.canonical("~/a.md"): {"ingested_at": "2026-01-01T00:00:00Z"},
-            manifest.canonical("~/b.md"): {"ingested_at": "2026-01-01T00:00:00Z"},
+            manifest.canonical_key("~/a.md"): {"ingested_at": "2026-01-01T00:00:00Z"},
+            manifest.canonical_key("~/b.md"): {"ingested_at": "2026-01-01T00:00:00Z"},
         }
         result, collisions = manifest.normalize_sources(sources)
         self.assertEqual(len(result), 2)
@@ -147,7 +142,7 @@ class ManifestIOTests(unittest.TestCase):
         written = json.loads((self.vault / ".manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(written["version"], 1)
         self.assertEqual(written["projects"], {"my-app": {"conversations_ingested": 5}})
-        self.assertEqual(list(written["sources"]), [manifest.canonical("~/a.md")])
+        self.assertEqual(list(written["sources"]), [manifest.canonical_key("~/a.md")])
 
     def test_missing_manifest_yields_empty_skeleton(self) -> None:
         self.assertEqual(manifest.load_manifest(self.vault), {"sources": {}})
@@ -163,32 +158,60 @@ class ManifestIOTests(unittest.TestCase):
         self.assertEqual(leftovers, [])
 
 
-class ClassifyTests(unittest.TestCase):
+class DeltaTests(unittest.TestCase):
+    """delta must stay a thin wrapper over cache.check_sources.
+
+    The failure this guards is silent: if delta ever classifies on its own
+    again, it can call a source unchanged that cache-check calls modified, and
+    the ingest skips a file that really did change.
+    """
+
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
-        self.source = Path(self._tmp.name) / "note.md"
+        self.vault = Path(self._tmp.name) / "vault"
+        self.vault.mkdir()
+        self.sources_dir = Path(self._tmp.name) / "sources"
+        self.sources_dir.mkdir()
+        self.source = self.sources_dir / "note.md"
         self.source.write_text("hello", encoding="utf-8")
 
     def tearDown(self) -> None:
         self._tmp.cleanup()
 
-    def test_unseen_source_is_new(self) -> None:
-        self.assertEqual(manifest.classify(self.source, None), "new")
+    def _delta(self) -> dict:
+        args = argparse.Namespace(
+            vault=str(self.vault),
+            scan=[str(self.sources_dir / "*.md")],
+            skip=None,
+            json=True,
+        )
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            manifest.cmd_delta(args)
+        return json.loads(out.getvalue())
 
-    def test_matching_hash_is_unchanged(self) -> None:
-        from llm_wiki.cache import compute_hash
+    def test_unrecorded_source_is_new(self) -> None:
+        self.assertEqual(self._delta()["new"], [str(self.source)])
 
-        entry = {"content_hash": compute_hash(self.source)}
-        self.assertEqual(manifest.classify(self.source, entry), "unchanged")
+    def test_recorded_source_is_unchanged(self) -> None:
+        update_source(self.vault, self.source, pages_created=[])
+        got = self._delta()
+        self.assertEqual(got["unchanged"], [str(self.source)])
+        self.assertEqual(got["new"], [])
 
-    def test_differing_hash_is_modified(self) -> None:
-        entry = {"content_hash": "deadbeef"}
-        self.assertEqual(manifest.classify(self.source, entry), "modified")
+    def test_resolves_a_non_canonical_manifest_key(self) -> None:
+        """The reason delta exists: an entry keyed in some other path form."""
+        odd_key = str(self.sources_dir / "sub" / ".." / "note.md")
+        (self.vault / ".manifest.json").write_text(
+            json.dumps({"sources": {odd_key: {"content_hash": compute_hash(self.source)}}}),
+            encoding="utf-8",
+        )
+        self.assertEqual(self._delta()["unchanged"], [str(self.source)])
 
-    def test_newer_mtime_without_hash_is_touched(self) -> None:
-        """Old entries carry no hash, so mtime is the only signal available."""
-        entry = {"ingested_at": "1999-01-01T00:00:00+00:00"}
-        self.assertEqual(manifest.classify(self.source, entry), "touched")
+    def test_gives_the_same_answer_as_cache_check(self) -> None:
+        update_source(self.vault, self.source, pages_created=[])
+        self.source.write_text("the document changed", encoding="utf-8")
+        self.assertEqual(self._delta(), check_sources(self.vault, [self.source]))
 
 
 if __name__ == "__main__":
