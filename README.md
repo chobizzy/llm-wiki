@@ -16,6 +16,7 @@ A knowledge base your AI agents maintain under written law — not a chatbot, no
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 
+[**Project site**][site-url] ·
 [Quickstart](#getting-started) ·
 [The Constitution](#the-constitution) ·
 [Skills](#the-skills) ·
@@ -30,6 +31,7 @@ A knowledge base your AI agents maintain under written law — not a chatbot, no
 
 1. [About The Project](#about-the-project)
    - [How it works](#how-it-works)
+   - [The graph weaves itself](#the-graph-weaves-itself)
    - [Compared to RAG](#compared-to-rag)
    - [Built With](#built-with)
 2. [Getting Started](#getting-started)
@@ -70,6 +72,9 @@ actually completed — instead of asking the model to grade its own homework.
 
 > **Laws, not tips.** Every rule has a number, a *never*, or a check.
 
+The [project site][site-url] covers the same ground with illustrations and a link graph drawn from a
+real vault.
+
 ### How it works
 
 ```mermaid
@@ -88,6 +93,16 @@ categories — merging into pages that already exist rather than piling up dupli
 it inferred, updating the index and the op log, and committing. Re-ingesting an unchanged source
 is a no-op, because every source is content-hashed in `.manifest.json`.
 
+### The graph weaves itself
+
+Pages are worth more connected than filed. Say *"link my pages"* and `cross-linker` scans the vault
+and writes the wikilinks that should already exist between related pages. Ask *"what connects X and
+Y?"* and `wiki-query` walks typed relationship edges, multi-hop, rather than grepping for keywords.
+
+Because the link index is a first-class artifact, `graph-query` answers structural questions from
+that index alone — without reading a single page body — and `graph-analyse` surfaces god nodes,
+communities, and connections you didn't know you'd made.
+
 ### Compared to RAG
 
 |                        | Typical RAG / notes chatbot         | llm-wiki                                              |
@@ -103,7 +118,7 @@ is a no-op, because every source is content-hashed in `.manifest.json`.
 
 ### Built With
 
-Deliberately boring. The CLI is ~2,600 lines of Python standard library with **zero runtime
+Deliberately boring. The CLI is ~2,900 lines of Python standard library with **zero runtime
 dependencies**, so it cannot break from a transitive upgrade, and the vault is plain markdown
 that outlives any of it.
 
@@ -200,7 +215,7 @@ Nothing above needs an API key. The agent running the skills already has model a
 ### CLI reference
 
 The CLI handles the deterministic work — the things you want a machine to be sure about, not a
-model to estimate.
+model to estimate. Fourteen commands, no API keys.
 
 | Command                                     | Purpose                                                       |
 | ------------------------------------------- | ------------------------------------------------------------- |
@@ -295,12 +310,11 @@ Thirty-two skills, each a plain `SKILL.md` your agent loads on demand. They live
 | Group           | Skills                                                                                              |
 | --------------- | --------------------------------------------------------------------------------------------------- |
 | **Foundation**  | `llm-wiki` (the pattern) · `wiki-setup` · `wiki-switch` · `wiki-status`                              |
-| **Ingest**      | `wiki-ingest` · `wiki-capture` · `wiki-import` · `wiki-research` · `wiki-history-ingest` · `claude-history-ingest` · `hermes-history-ingest` |
-| **Read**        | `wiki-query` · `wiki-digest` · `wiki-context-pack` · `wiki-export`                                   |
-| **Maintain**    | `wiki-lint` · `cross-linker` · `wiki-dedup` · `wiki-update` · `daily-update` · `wiki-rebuild` · `wiki-stage-commit` · `tag-taxonomy` |
-| **Synthesize**  | `wiki-synthesize`                                                                                    |
+| **Ingest**      | `wiki-ingest` · `wiki-capture` · `wiki-update` · `wiki-import` · `wiki-research` · `wiki-history-ingest` · `claude-history-ingest` · `hermes-history-ingest` · `wiki-agent` |
+| **Read**        | `wiki-query` · `wiki-synthesize` · `wiki-digest` · `wiki-context-pack` · `wiki-export` · `memory-bridge` |
+| **Maintain**    | `wiki-lint` · `cross-linker` · `wiki-dedup` · `tag-taxonomy` · `daily-update` · `wiki-rebuild` · `wiki-stage-commit` |
 | **Obsidian UX** | `wiki-dashboard` · `graph-colorize` · `obsidian-layout-adjustment`                                   |
-| **Meta**        | `skill-creator` · `vault-skill-factory` · `wiki-agent` · `memory-bridge` · `impl-validator`           |
+| **Meta**        | `skill-creator` · `vault-skill-factory` · `impl-validator`                                            |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -394,6 +408,7 @@ Project link: [https://github.com/chobizzy/llm-wiki](https://github.com/chobizzy
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
+[site-url]: https://chobizzy.github.io/llm-wiki/
 [license-shield]: https://img.shields.io/github/license/chobizzy/llm-wiki?style=for-the-badge
 [license-url]: https://github.com/chobizzy/llm-wiki/blob/main/LICENSE
 [stars-shield]: https://img.shields.io/github/stars/chobizzy/llm-wiki?style=for-the-badge
