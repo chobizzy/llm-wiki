@@ -3,7 +3,7 @@ title: llm-wiki framework
 category: entities
 tags: [tools]
 sources: ["https://github.com/chobizzy/llm-wiki"]
-summary: The self-owned skill framework this vault runs on — 32 agent skills as git-tracked files, a deterministic stdlib-only CLI (doctor/lint), and a shared config.
+summary: The self-owned skill framework this vault runs on — 31 agent skills as git-tracked files, a deterministic stdlib-only CLI (doctor/lint), and a shared config.
 lifecycle: draft
 lifecycle_changed: "2026-07-12"
 tier: supporting
@@ -18,7 +18,7 @@ updated: 2026-07-21
 
 # llm-wiki framework
 
-The engine under this vault: the self-owned `llm-wiki` git repo ships 32 agent skills (ingest, query, lint, synthesize, history mining) plus a deterministic, stdlib-only CLI whose `doctor` and `lint` commands are this vault's DONE gates. The skills are owned files under version control — one git-tracked copy linked into agents, never artifacts inside site-packages.
+The engine under this vault: the self-owned `llm-wiki` git repo ships 31 agent skills (ingest, query, lint, synthesize, history mining) plus a deterministic, stdlib-only CLI whose `doctor` and `lint` commands are this vault's DONE gates. The skills are owned files under version control — one git-tracked copy linked into agents, never artifacts inside site-packages.
 
 ## What it is
 

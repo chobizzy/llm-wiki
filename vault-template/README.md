@@ -11,7 +11,7 @@ updated: 2026-07-21
 
 # LLM Wiki Vault Template
 
-A ready-to-clone skeleton for a **Karpathy-style LLM wiki**: a knowledge base treated like a codebase, where raw sources are immutable input, AI agents are the compiler, and a wiki of small linked pages is the compiled artifact you browse in Obsidian (<https://obsidian.md>). It runs on the self-owned **llm-wiki** skill framework — a git repo of 32 agent skills plus a stdlib-only CLI — and is governed by a constitution (`AGENTS.md`) that any agent — Claude Code, Hermes, or others — obeys.
+A ready-to-clone skeleton for a **Karpathy-style LLM wiki**: a knowledge base treated like a codebase, where raw sources are immutable input, AI agents are the compiler, and a wiki of small linked pages is the compiled artifact you browse in Obsidian (<https://obsidian.md>). It runs on the self-owned **llm-wiki** skill framework — a git repo of 31 agent skills plus a stdlib-only CLI — and is governed by a constitution (`AGENTS.md`) that any agent — Claude Code, Hermes, or others — obeys.
 
 ## Quickstart
 

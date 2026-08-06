@@ -7,7 +7,7 @@
 **Your notes, compiled.**
 
 A knowledge base your AI agents maintain under written law — not a chatbot, not a vector store.
-32 agent skills, a zero-dependency CLI, and a ready-to-copy Obsidian vault governed by a constitution.
+31 agent skills, a zero-dependency CLI, and a ready-to-copy Obsidian vault governed by a constitution.
 
 [![MIT License][license-shield]][license-url]
 [![Python 3.10+][python-shield]][python-url]
@@ -81,7 +81,7 @@ real vault.
 flowchart LR
     A["LAYER 1 — SOURCES<br/>PDFs, articles, papers<br/>chat exports, images<br/>immutable ground truth"]
     B["LAYER 2 — THE WIKI<br/>small linked pages<br/>frontmatter + provenance<br/>the compiled artifact"]
-    C["LAYER 3 — THE SCHEMA<br/>AGENTS.md constitution<br/>32 skills + CLI gate<br/>how it stays honest"]
+    C["LAYER 3 — THE SCHEMA<br/>AGENTS.md constitution<br/>31 skills + CLI gate<br/>how it stays honest"]
 
     A -->|agents distill| B
     C -.->|governs every write| B
@@ -313,7 +313,7 @@ Thirty-two skills, each a plain `SKILL.md` your agent loads on demand. They live
 | **Ingest**      | `wiki-ingest` · `wiki-capture` · `wiki-update` · `wiki-import` · `wiki-research` · `wiki-history-ingest` · `claude-history-ingest` · `hermes-history-ingest` · `wiki-agent` |
 | **Read**        | `wiki-query` · `wiki-synthesize` · `wiki-digest` · `wiki-context-pack` · `wiki-export` · `memory-bridge` |
 | **Maintain**    | `wiki-lint` · `cross-linker` · `wiki-dedup` · `tag-taxonomy` · `daily-update` · `wiki-rebuild` · `wiki-stage-commit` |
-| **Obsidian UX** | `wiki-dashboard` · `graph-colorize` · `obsidian-layout-adjustment`                                   |
+| **Obsidian UX** | `wiki-dashboard` · `graph-colorize`                                                                 |
 | **Meta**        | `skill-creator` · `vault-skill-factory` · `impl-validator`                                            |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -350,7 +350,7 @@ Full details in [`vault-template/docs/`](vault-template/docs/) —
 ## Roadmap
 
 - [x] Stdlib-only CLI with `doctor` / `lint` gate
-- [x] 32 skills, linked from the checkout rather than `site-packages`
+- [x] 31 skills, linked from the checkout rather than `site-packages`
 - [x] Vault template with an eleven-law constitution
 - [x] Provenance markers, confidence scoring, and lifecycle states
 - [x] Wikilink graph analysis and index-only querying
@@ -418,7 +418,7 @@ Project link: [https://github.com/chobizzy/llm-wiki](https://github.com/chobizzy
 [python-shield]: https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge
 [deps-shield]: https://img.shields.io/badge/dependencies-zero-brightgreen?style=for-the-badge
 [deps-url]: https://github.com/chobizzy/llm-wiki/blob/main/pyproject.toml
-[skills-shield]: https://img.shields.io/badge/skills-32-8A2BE2?style=for-the-badge
+[skills-shield]: https://img.shields.io/badge/skills-31-8A2BE2?style=for-the-badge
 [skills-url]: https://github.com/chobizzy/llm-wiki/tree/main/skills
 
 [python-badge]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white

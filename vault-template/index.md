@@ -18,7 +18,7 @@ updated: 2026-07-14
 
 ## Entities
 
-- [[llm-wiki-framework]] — the self-owned skill framework this vault runs on: 32 git-tracked skills, CLI gates, shared config ( #tools)
+- [[llm-wiki-framework]] — the self-owned skill framework this vault runs on: 31 git-tracked skills, CLI gates, shared config ( #tools)
 
 ## Skills
 
