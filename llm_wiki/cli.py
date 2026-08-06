@@ -128,6 +128,36 @@ def install_global_skills(mode: str) -> None:
     _install_hermes_profiles(mode)
 
 
+def _agent_install_dirs() -> list[tuple[Path, str]]:
+    """Every agent skills dir to inspect, with its display label.
+
+    Mirrors what `install_global_skills` provisions — including Hermes wherever
+    HERMES_HOME actually points. On Windows that is %LOCALAPPDATA%\\hermes, so
+    reporting against ~/.hermes alone calls an installed Hermes "not installed".
+    """
+    hermes_home = os.environ.get("HERMES_HOME") or _read_config_value("HERMES_HOME")
+    hermes_dir = Path(hermes_home).expanduser() if hermes_home else None
+    relocated = bool(hermes_dir) and hermes_dir != HOME / ".hermes"
+
+    dirs: list[tuple[Path, str]] = []
+    for rel, label, _subset in GLOBAL_AGENT_DIRS:
+        if rel == ".hermes/skills" and relocated:
+            dirs.append((hermes_dir / "skills", f"{hermes_dir}/skills/ (Hermes active profile)"))
+        else:
+            dirs.append((HOME / rel, label))
+
+    profiles = HOME / ".hermes" / "profiles"
+    if profiles.is_dir():
+        for prof in sorted(p for p in profiles.iterdir() if p.is_dir()):
+            dirs.append(
+                (
+                    prof / "skills",
+                    f"~/.hermes/profiles/{prof.name}/skills/ (Hermes profile: {prof.name})",
+                )
+            )
+    return dirs
+
+
 def _install_hermes_profiles(mode: str) -> None:
     """Install into the active and all named Hermes profiles."""
     hermes_home = os.environ.get("HERMES_HOME") or _read_config_value("HERMES_HOME")
@@ -476,8 +506,7 @@ def run_doctor(*, vault_override: str | None = None) -> dict[str, object]:
     partial_agents: list[str] = []
     full_agents = 0
     bundled_set = set(bundled)
-    for rel, label, _subset in GLOBAL_AGENT_DIRS:
-        agent_dir = HOME / rel
+    for agent_dir, label in _agent_install_dirs():
         if not agent_dir.is_dir():
             continue
         installed = {p.name for p in agent_dir.iterdir() if (p.is_dir() or p.is_symlink())}
@@ -798,8 +827,7 @@ def cmd_info(args: argparse.Namespace) -> int:
     print()
     print("Agent skill install status:")
     bundled_set = set(bundled)
-    for rel, label, _subset in GLOBAL_AGENT_DIRS:
-        agent_dir = HOME / rel
+    for agent_dir, label in _agent_install_dirs():
         if not agent_dir.is_dir():
             print(f"  {label}: not installed")
             continue
