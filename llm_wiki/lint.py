@@ -9,6 +9,12 @@ from typing import Any
 
 SKIP_DIRS = frozenset("_raw _archived _staging _archives .obsidian".split())
 REQUIRED_FRONTMATTER = ("title", "category", "tags", "sources", "created", "updated")
+# Law 4's eighth field, required of wiki pages only. Law 3 puts wiki pages in
+# these folders and nowhere else, so everything outside them -- root files like
+# index/log/hot and the constitution, plus _meta/ system data -- is bookkeeping
+# rather than knowledge. A lifecycle on those would assert a trust state that
+# does not apply: "draft" on AGENTS.md would read as "no human checked this".
+CONTENT_DIRS = frozenset("concepts entities skills references synthesis journal projects".split())
 RESERVED_PAGE_STEMS = frozenset({"index", "log", "hot", "_insights"})
 VALID_LIFECYCLE = ("draft", "reviewed", "verified", "disputed", "archived")
 
@@ -59,6 +65,7 @@ def _parse_frontmatter_values(frontmatter: str) -> dict[str, str]:
 
 
 def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
+    relative = path.relative_to(vault)
     text = path.read_text(encoding="utf-8", errors="replace")
     front_match = _FRONTMATTER_RE.match(text)
     frontmatter = front_match.group(1) if front_match else ""
@@ -76,8 +83,9 @@ def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
             links.append(target)
 
     return {
-        "path": str(path.relative_to(vault)),
+        "path": str(relative),
         "slug": _slug(path.stem),
+        "is_wiki_page": len(relative.parts) > 1 and relative.parts[0] in CONTENT_DIRS,
         "title": values.get("title", "").strip() or path.stem,
         "summary": values.get("summary", "").strip(),
         "lifecycle": values.get("lifecycle", "").strip(),
@@ -103,7 +111,8 @@ def lint_vault(vault: Path) -> dict[str, Any]:
 
     missing_frontmatter = []
     for page in pages:
-        missing = [field for field in REQUIRED_FRONTMATTER if field not in page["fields"]]
+        required = REQUIRED_FRONTMATTER + (("lifecycle",) if page["is_wiki_page"] else ())
+        missing = [field for field in required if field not in page["fields"]]
         if missing:
             missing_frontmatter.append({"page": page["path"], "missing": missing})
 
@@ -123,9 +132,9 @@ def lint_vault(vault: Path) -> dict[str, Any]:
         if "summary" not in page["fields"] or not page["summary"]
     ]
 
-    # Pages without a lifecycle field are not flagged here: the field is still
-    # being phased in, and its absence is a missing_frontmatter concern. This
-    # check only rejects values that are not states in the machine at all.
+    # Absence is not flagged here -- missing_frontmatter owns that, and only for
+    # wiki pages (see CONTENT_DIRS). This check only rejects values that are not
+    # states in the machine at all, wherever they appear.
     invalid_lifecycle = [
         {"page": page["path"], "value": page["lifecycle"]}
         for page in pages
