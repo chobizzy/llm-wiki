@@ -23,20 +23,17 @@ You are performing a destructive operation on the wiki. Always archive first, al
 
 ## The Archive System
 
-Archives live at `$OBSIDIAN_VAULT_PATH/_archives/`. Each archive is a timestamped directory containing a full copy of the wiki state at that point.
+Archives live at `$OBSIDIAN_VAULT_PATH/_archives/` (create it on the first archive). Each archive is a timestamped directory containing a full copy of the wiki state at that point: every folder in the vault's CATEGORIES table (`AGENTS.md`, or `llm-wiki layout --json`), plus the bookkeeping files. The example shows a standard vault:
 
 ```
 $OBSIDIAN_VAULT_PATH/
 ├── _archives/
 │   ├── 2026-04-01T10-30-00Z/
 │   │   ├── archive-meta.json
-│   │   ├── concepts/
-│   │   ├── entities/
-│   │   ├── skills/
 │   │   ├── references/
+│   │   ├── entities/
 │   │   ├── synthesis/
-│   │   ├── journal/
-│   │   ├── projects/
+│   │   ├── concepts/
 │   │   ├── index.md
 │   │   ├── log.md
 │   │   └── .manifest.json
@@ -68,7 +65,7 @@ When the user wants to snapshot the current state without rebuilding.
 ### Steps:
 
 1. Create archive directory: `_archives/YYYY-MM-DDTHH-MM-SSZ/`
-2. Copy all category directories, `index.md`, `log.md`, `.manifest.json`, and `projects/` into the archive
+2. Copy every category folder listed in the CATEGORIES table, plus `index.md`, `log.md`, and `.manifest.json`, into the archive
 3. Write `archive-meta.json` with reason `"snapshot"`
 4. Append to `log.md`:
    ```
@@ -87,12 +84,12 @@ Same as Mode 1 above, but with reason `"rebuild"`.
 
 ### Step 2: Clear live wiki
 
-Remove all content from the category directories (`concepts/`, `entities/`, `skills/`, etc.) and the `projects/` directory. Keep:
+Remove all content from the category folders listed in the CATEGORIES table (`references/`, `entities/`, `synthesis/`, `concepts/` in a standard vault; plus `projects/` and any other folder the table lists). Keep the folders themselves (with a `.gitkeep`) so the layout survives. Keep:
 - `_archives/` (obviously)
 - `.obsidian/` (Obsidian config)
 - `.env` (if present in vault)
 
-Reset `index.md` to the empty template. Reset `log.md` with just the rebuild entry. Delete `.manifest.json` (it'll be recreated during ingest).
+Reset `index.md` to an empty catalog: one `## <Folder>` heading per CATEGORIES row, then `## Meta` (see `index.md` in `llm-wiki/SKILL.md`). Reset `log.md` with just the rebuild entry. Delete `.manifest.json` (it'll be recreated during ingest).
 
 ### Step 3: Rebuild
 

@@ -89,7 +89,7 @@ Append to `$OBSIDIAN_VAULT_PATH/log.md`:
 - [TIMESTAMP] DAILY-UPDATE fresh=N stale=N missing=N index_added=N hot_refreshed=true|false
 ```
 
-If `$OBSIDIAN_VAULT_PATH/_meta/trust-ledger.md` exists, also append the cycle's outcome there:
+Also append the cycle's outcome to `$OBSIDIAN_VAULT_PATH/_meta/trust-ledger.md` — if the file doesn't exist yet, create it first with the header in `llm-wiki/SKILL.md` (Trust Ledger):
 ```
 - [TIMESTAMP] skill=daily-update agent=<agent> gate=pass|fail notes="<one-line summary>"
 ```

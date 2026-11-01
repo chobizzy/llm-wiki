@@ -25,6 +25,7 @@ You are ingesting source documents into an Obsidian wiki. Your job is not to sum
 3. Read `.manifest.json` at the vault root to check what's already been ingested
 4. Read `index.md` to understand current wiki content
 5. Read `log.md` to understand recent activity
+6. Read the CATEGORIES table in `AGENTS.md` (or run `llm-wiki layout --json`): it lists the only folders pages may go in, and which folder holds each role. Folder names below are the standard vault's; use this vault's.
 
 When writing internal links in Step 5, apply the link format described in `llm-wiki/SKILL.md` (Link Format section) according to the `OBSIDIAN_LINK_FORMAT` value you read.
 
@@ -150,13 +151,13 @@ Common chat export shapes:
 - **Slack export** (per-channel JSON): `[{"user": "U123", "text": …, "ts": …}]`
 - **Generic chat log**: `[2024-03-15 10:30] User: message`
 
-**Distill substance, not dialogue.** A 50-message debugging session might yield one `skills/` page about the fix; a long brainstorm might yield three `concepts/` pages. Skip greetings, pleasantries, meta-conversation, repetitive back-and-forth, and raw code dumps (unless they show a reusable pattern). Cluster extracted knowledge by **topic**, not by source file or conversation — a long thread or twenty screenshots of the same bug should produce pages organized by subject, not one page per message. Conversation/log data is high-inference: be liberal with `^[inferred]` for synthesized patterns and `^[ambiguous]` when speakers contradict each other.
+**Distill substance, not dialogue.** A 50-message debugging session might yield one how-to page about the fix; a long brainstorm might yield three concept pages. Skip greetings, pleasantries, meta-conversation, repetitive back-and-forth, and raw code dumps (unless they show a reusable pattern). Cluster extracted knowledge by **topic**, not by source file or conversation — a long thread or twenty screenshots of the same bug should produce pages organized by subject, not one page per message. Conversation/log data is high-inference: be liberal with `^[inferred]` for synthesized patterns and `^[ambiguous]` when speakers contradict each other.
 
 **Large files:** read in chunks with offset/limit — don't load a 10 MB JSON at once. **Encoding issues:** if text is garbled, mention it to the user and move on. **Binary files:** skip them (except images, which are first-class via the Read tool).
 
 ### Web URL sources
 
-When the source is a **web URL** (`/ingest-url <url>`, "add this URL", "ingest this link", "save this page", or a pasted link), the flow is different: detect the current project, fetch with `defuddle`/`WebFetch`, then file the page into the detected project's `references/` folder or fall back to `misc/` with affinity scoring for later promotion. **Read `references/url-sources.md` and follow it** — it covers project detection, clean extraction, dedup, slug generation, project-vs-misc frontmatter, affinity scoring, stub handling on fetch failure, and the `INGEST_URL` log/manifest format. The rest of this skill (config, trust boundary, QMD refresh) still applies.
+When the source is a **web URL** (`/ingest-url <url>`, "add this URL", "ingest this link", "save this page", or a pasted link), the flow is different: detect the current project, fetch with `defuddle`/`WebFetch`, then file the page into the detected project's `references/` folder (when the vault has a project folder) or into the vault's reference folder marked `promotion_status: misc`, with affinity scoring for later promotion. **Read `references/url-sources.md` and follow it** — it covers project detection, clean extraction, dedup, slug generation, project-vs-misc frontmatter, affinity scoring, stub handling on fetch failure, and the `INGEST_URL` log/manifest format. The rest of this skill (config, trust boundary, QMD refresh) still applies.
 
 ### Multimodal branch (images)
 
@@ -221,7 +222,7 @@ Research papers (arXiv/conference PDFs) carry their substance in figures, equati
    - **Mermaid is the dependency-free fallback.** If PyMuPDF/poppler isn't available or a figure can't be extracted, draw the architecture as a Mermaid diagram instead — Obsidian renders Mermaid fenced code blocks natively with no dependencies. `![[<source>.pdf#page=N]]` (the whole source page) is another no-extract option.
 3. **Keep the math as math.** Set the 1–3 core equations as `$$…$$` display LaTeX, not backtick code.
 4. **Tabulate results.** Render headline benchmark numbers as a markdown table, not a comma-separated blob.
-5. **Write the page with the Paper Deep-Dive Template** (`llm-wiki/SKILL.md`) into `references/`, in addition to the distilled concept/entity cross-links. This is the deliberate exception to "aim for 10–15 small pages" (Step 4) — a paper earns one rich, self-contained page.
+5. **Write the page with the Paper Deep-Dive Template** (`llm-wiki/SKILL.md`) into the `reference` folder (`references/` in a standard vault), in addition to the distilled concept/entity cross-links. This is the deliberate exception to "aim for 10–15 small pages" (Step 4) — a paper earns one rich, self-contained page.
 
 See the *Paper Extraction Frame* in `references/ingest-prompts.md` for the reading checklist.
 
@@ -254,7 +255,7 @@ The output is JSON with three sections you'll use directly:
 
 #### What to do with the AST output
 
-1. **Seed entity pages** — each `kind: "class"` node with degree ≥ 2 (appears in multiple edges) gets a stub `entities/<name>.md` page. Do not create a page per function — only architectural-level entities.
+1. **Seed entity pages** — each `kind: "class"` node with degree ≥ 2 (appears in multiple edges) gets a stub `<name>.md` page in the `entity` folder (`entities/` in a standard vault). Do not create a page per function — only architectural-level entities.
 
 2. **Mark god nodes** — the top `god_nodes` entries are the concepts every other page should link to. Reference them in the project overview page.
 
@@ -285,10 +286,12 @@ You'll apply markers in Step 5. Don't conflate these — the wiki's value depend
 
 ### Step 3: Determine Project Scope
 
-If the source belongs to a specific project:
+If the source belongs to a specific project and the vault has a folder with the `project` role (`projects/` by default):
 - Place project-specific knowledge under `projects/<project-name>/<category>/`
 - Place general knowledge in global category directories
 - Create or update the project overview at `projects/<name>/<name>.md` (named after the project — never `_project.md`, as Obsidian uses filenames as graph node labels)
+
+If the vault has no project folder, file everything in the global category folders and add `project: <project-name>` to the frontmatter of project-specific pages — never create a `projects/` folder the CATEGORIES table doesn't list (law 3).
 
 If the source is not project-specific, put everything in global categories.
 
@@ -297,7 +300,7 @@ If the source is not project-specific, put everything in global categories.
 Before writing anything, plan which pages to update or create. Aim for 10-15 pages per ingest. For each:
 - Does this page already exist? (Check `index.md` and use Glob to search `OBSIDIAN_VAULT_PATH`)
 - If it exists, what new information does this source add?
-- If it's new, which category does it belong in?
+- If it's new, which category does it belong in? Walk the CATEGORIES table top-down: the first row whose *Holds* fits wins; the last row takes everything else.
 - What `[[wikilinks]]` should connect it to existing pages?
 
 **Apply tier-aware filtering to existing pages** (see `llm-wiki/SKILL.md`, Importance Tiering section):
@@ -343,8 +346,8 @@ For each page in your plan:
 **If `WIKI_STAGED_WRITES` is not set or is `false` (default):**
 
 **If creating a new page:**
-- Use the page template from the llm-wiki skill (frontmatter + sections). **For academic papers landing in `references/`, use the Paper Deep-Dive Template** from `llm-wiki/SKILL.md` instead of the generic one (see *Academic papers* in Step 1).
-- Place in the correct category directory
+- Use the page template from the llm-wiki skill (frontmatter + sections). **For academic papers landing in the `reference` folder, use the Paper Deep-Dive Template** from `llm-wiki/SKILL.md` instead of the generic one (see *Academic papers* in Step 1).
+- Place it in the folder your CATEGORIES walk picked, and set `category:` to match (in a single-folder vault, to the page's kind)
 - Add `[[wikilinks]]` to at least 2-3 existing pages
 - Include the source in the `sources` frontmatter field. In raw mode: derive from `capture_source` + `sources` frontmatter of the `_raw/` file — never use the `_raw/` path itself (see Raw Mode section)
 

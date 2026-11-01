@@ -209,7 +209,7 @@ def resolve_vault_path(cli_vault: str | None) -> str:
         return existing
     if sys.stdin.isatty():
         try:
-            entered = input("  Where is your Obsidian vault? (absolute path): ").strip()
+            entered = input("  Vault folder (an existing vault, or where to create one): ").strip()
         except EOFError:
             entered = ""
         if entered:
@@ -217,14 +217,15 @@ def resolve_vault_path(cli_vault: str | None) -> str:
     return existing
 
 
-def write_config(vault_path: str) -> None:
+def write_config(vault_path: str, extra: dict[str, str] | None = None) -> None:
     """Write ~/.llm-wiki/config, preserving unknown keys.
 
     Existing values are kept (this config carries user-managed keys like
-    OBSIDIAN_SOURCES_DIR).
+    OBSIDIAN_SOURCES_DIR); *extra* sets or overrides keys the caller decided.
     """
     GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     values = _read_config()
+    values.update(extra or {})
     if vault_path:
         values["OBSIDIAN_VAULT_PATH"] = vault_path
     # LLM_WIKI_REPO points at the repo root so skills that reference framework
@@ -329,6 +330,48 @@ def _check_required_files(vault: Path, required: list[str]) -> dict[str, str] | 
         "name": "required-files",
         "status": "pass",
         "detail": f"all {len(required)} WIKI_REQUIRED_FILES present",
+        "hint": "",
+    }
+
+
+def _check_layout(vault: Path) -> dict[str, str]:
+    """The CATEGORIES table in AGENTS.md parses, and its folders exist.
+
+    A vault without the table keeps the original layout; its folders are not
+    checked, because vaults made before the table often lack a few of them.
+    """
+    from llm_wiki.layout import LayoutError, load_layout
+
+    try:
+        layout = load_layout(vault)
+    except LayoutError as exc:
+        return {
+            "name": "vault-layout",
+            "status": "fail",
+            "detail": "CATEGORIES table in AGENTS.md is invalid: " + "; ".join(exc.problems),
+            "hint": "fix the table: one row per folder, with Folder, Holds and Role columns",
+        }
+    folders = ", ".join(f"{category.folder}/" for category in layout.categories)
+    if layout.source != "AGENTS.md":
+        return {
+            "name": "vault-layout",
+            "status": "pass",
+            "detail": f"no CATEGORIES table in AGENTS.md; using the original layout ({folders})",
+            "hint": "",
+        }
+    missing = [category.folder for category in layout.categories if not (vault / category.folder).is_dir()]
+    if missing:
+        return {
+            "name": "vault-layout",
+            "status": "warn",
+            "detail": "category folder(s) missing: " + ", ".join(f"{name}/" for name in missing),
+            "hint": "create them, or remove their rows from the CATEGORIES table in AGENTS.md",
+        }
+    count = len(layout.categories)
+    return {
+        "name": "vault-layout",
+        "status": "pass",
+        "detail": f"{count} {'category' if count == 1 else 'categories'} from AGENTS.md: {folders}",
         "hint": "",
     }
 
@@ -466,6 +509,8 @@ def run_doctor(*, vault_override: str | None = None) -> dict[str, object]:
             else:
                 _doctor_add(checks, name="vault-core-files", status="pass", detail="core vault files present", hint="")
 
+            checks.append(_check_layout(vault))
+
             manifest_path = vault / ".manifest.json"
             if manifest_path.exists():
                 try:
@@ -562,7 +607,123 @@ def _print_doctor(report: dict[str, object]) -> None:
             print(f"   hint: {hint}")
 
 
+def _is_new_vault_spot(target: Path) -> bool:
+    return not target.exists() or (target.is_dir() and not any(target.iterdir()))
+
+
+def _offer_new_vault(vault_path: str) -> dict[str, str]:
+    """When the vault folder doesn't exist yet, offer to create it.
+
+    Runs the same interview as `llm-wiki init` on a terminal. Returns config
+    keys to write (the staged-writes choice), or {} when nothing was created.
+    """
+    from llm_wiki.scaffold import ScaffoldError, create_vault, interview, next_steps
+
+    target = Path(vault_path).expanduser().absolute()
+    if not _is_new_vault_spot(target):
+        return {}
+    if not sys.stdin.isatty():
+        print(f"    → No vault at {target} yet. Create one with: llm-wiki init \"{target}\"")
+        return {}
+    try:
+        answer = input(f"  No vault at {target} yet. Create one now? [Y/n] ").strip().lower()
+    except EOFError:
+        answer = "n"
+    if answer not in ("", "y", "yes"):
+        print(f"    → Create it later with: llm-wiki init \"{target}\"")
+        return {}
+    print()
+    choices = interview(target=target)
+    if choices is None:
+        print("    → No vault created.")
+        return {}
+    try:
+        summary = create_vault(target, choices.plan, demo=choices.demo, backup_hook=choices.backup_hook)
+    except ScaffoldError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return {}
+    print()
+    print(next_steps(summary, choices.plan, from_setup=True))
+    print()
+    default = choices.plan.suggests_staged_writes()
+    prompt = "  Hold agent edits in _staging/ until you approve them (staged writes)? " + ("[Y/n] " if default else "[y/N] ")
+    try:
+        answer = input(prompt).strip().lower()
+    except EOFError:
+        answer = ""
+    staged = default if not answer else answer in ("y", "yes")
+    print()
+    return {"WIKI_STAGED_WRITES": "true" if staged else "false"}
+
+
 # ── Commands ─────────────────────────────────────────────────────────────────
+def cmd_init(args: argparse.Namespace) -> int:
+    from llm_wiki.presets import DEFAULT_PACK, PresetError, compose
+    from llm_wiki.scaffold import ScaffoldError, check_target, create_vault, interview, next_steps, render_preview
+
+    target = Path(args.path).expanduser().absolute()
+    asked = any([args.pack, args.role, args.add, args.folder, args.rename, args.no_demo, args.backup_hook])
+    try:
+        check_target(target)
+        if not (asked or args.yes or args.dry_run) and sys.stdin.isatty():
+            choices = interview(target=target)
+            if choices is None:
+                print("Cancelled; nothing was written.")
+                return 1
+            plan, demo, backup_hook = choices.plan, choices.demo, choices.backup_hook
+        else:
+            plan = compose(
+                args.pack or DEFAULT_PACK,
+                roles=args.role or (),
+                addons=args.add or (),
+                folders=[_pair(value, "--folder", "name=what it holds") for value in args.folder or ()],
+                renames=[_pair(value, "--rename", "old=new") for value in args.rename or ()],
+            )
+            demo, backup_hook = not args.no_demo, args.backup_hook
+            if args.dry_run:
+                print(render_preview(target, plan, demo=demo, backup_hook=backup_hook))
+                return 0
+        summary = create_vault(target, plan, demo=demo, backup_hook=backup_hook)
+    except (PresetError, ScaffoldError) as exc:
+        problems = getattr(exc, "problems", [str(exc)])
+        for problem in problems:
+            print(f"error: {problem}", file=sys.stderr)
+        return 1
+    print(next_steps(summary, plan))
+    return 0
+
+
+def _pair(value: str, flag: str, shape: str) -> tuple[str, str]:
+    from llm_wiki.presets import PresetError
+
+    left, sep, right = value.partition("=")
+    if not sep:
+        raise PresetError([f"{flag} takes {shape}, got `{value}`"])
+    return left, right
+
+
+def cmd_presets(args: argparse.Namespace) -> int:
+    from llm_wiki.presets import ADDONS, DEFAULT_PACK, PACKS, ROLES, catalog
+
+    if args.json:
+        print(json.dumps(catalog(), indent=2 if args.pretty else None))
+        return 0
+    print("Packs (llm-wiki init PATH --pack NAME)")
+    for pack in PACKS.values():
+        folders = " ".join(f"{folder.folder}/" for folder in pack.folders)
+        default = "  (default)" if pack.name == DEFAULT_PACK else ""
+        print(f"  {pack.name:<9} {folders:<44} {pack.summary}{default}")
+    print()
+    print("Roles for the standard pack; combine any (--role NAME)")
+    for role in ROLES.values():
+        adds = " ".join(f"{ADDONS[name].folder}/" for name in role.adds)
+        print(f"  {role.name:<13} + {adds:<22} {role.label}: {role.summary}")
+    print()
+    print("Single add-on folders (--add NAME), or your own (--folder name=\"what it holds\")")
+    print("  " + "  ".join(ADDONS))
+    return 0
+
+
 def cmd_setup(args: argparse.Namespace) -> int:
     mode = "copy" if args.copy else "symlink"
     print("\n╔══════════════════════════════════════════════════╗")
@@ -570,7 +731,8 @@ def cmd_setup(args: argparse.Namespace) -> int:
     print("╚══════════════════════════════════════════════════╝\n")
 
     vault_path = resolve_vault_path(args.vault)
-    write_config(vault_path)
+    extra = _offer_new_vault(vault_path) if vault_path else {}
+    write_config(vault_path, extra)
     if not vault_path:
         print("    → Vault path not set yet. Re-run with `--vault /path/to/vault`")
         print("      or edit OBSIDIAN_VAULT_PATH in ~/.llm-wiki/config.")
@@ -733,6 +895,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def _print_lint(report: dict[str, object]) -> None:
     print(f"llm-wiki lint: {report['status']}")
+    layout = report["layout"]
+    print(f"layout: {layout['source']} ({', '.join(f'{name}/' for name in layout['folders'])})")
     stats = report["stats"]
     print(f"pages: {stats['pages']}  links: {stats['link_count']}")
     for name, count in stats["findings"].items():
@@ -742,14 +906,8 @@ def _print_lint(report: dict[str, object]) -> None:
 def cmd_lint(args: argparse.Namespace) -> int:
     from llm_wiki.lint import lint_vault
 
-    vault_arg = args.vault or _read_config_value("OBSIDIAN_VAULT_PATH")
-    if not vault_arg:
-        print("error: vault not configured; pass a path or run llm-wiki setup", file=sys.stderr)
-        return 1
-
-    vault = Path(vault_arg).expanduser().resolve()
-    if not vault.is_dir():
-        print(f"error: vault not found: {vault}", file=sys.stderr)
+    vault = _resolve_vault_arg(args.vault)
+    if vault is None:
         return 1
 
     report = lint_vault(vault)
@@ -762,6 +920,48 @@ def cmd_lint(args: argparse.Namespace) -> int:
         _print_lint(report)
     if report["status"] == "fail" or (args.strict and report["status"] == "warn"):
         return 1
+    return 0
+
+
+def _resolve_vault_arg(vault_arg: str | None) -> Path | None:
+    """The vault from an explicit argument or the global config, if it exists."""
+    vault_arg = vault_arg or _read_config_value("OBSIDIAN_VAULT_PATH")
+    if not vault_arg:
+        print("error: vault not configured; pass a path or run llm-wiki setup", file=sys.stderr)
+        return None
+    vault = Path(vault_arg).expanduser().resolve()
+    if not vault.is_dir():
+        print(f"error: vault not found: {vault}", file=sys.stderr)
+        return None
+    return vault
+
+
+def cmd_layout(args: argparse.Namespace) -> int:
+    from llm_wiki.layout import LayoutError, load_layout
+
+    vault = _resolve_vault_arg(args.vault)
+    if vault is None:
+        return 1
+    try:
+        layout = load_layout(vault)
+    except LayoutError as exc:
+        print("error: the CATEGORIES table in AGENTS.md is invalid:", file=sys.stderr)
+        for problem in exc.problems:
+            print(f"  - {problem}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(layout.to_dict(), indent=2 if args.pretty else None))
+        return 0
+
+    source = "CATEGORIES table in AGENTS.md" if layout.source == "AGENTS.md" else "original layout (no CATEGORIES table)"
+    print(f"layout: {source}")
+    width = max(len(category.folder) for category in layout.categories) + 1
+    for category in layout.categories:
+        role = category.role or "-"
+        print(f"  {category.folder + '/':<{width + 1}} {role:<10} {category.holds}")
+    print(f"catch-all: {layout.catch_all.folder}/")
+    print("roles: " + "  ".join(f"{role}→{folder}/" for role, folder in layout.roles().items()))
     return 0
 
 
@@ -860,6 +1060,38 @@ def build_parser() -> argparse.ArgumentParser:
         help="copy skill files instead of symlinking to the repo checkout",
     )
     sp.set_defaults(func=cmd_setup)
+
+    from llm_wiki.presets import ADDONS, PACKS, ROLES
+
+    np = sub.add_parser(
+        "init",
+        help="create a new vault from a pack (asks a few questions when run in a terminal without options)",
+    )
+    np.add_argument("path", help="where to create the vault: a new or empty folder")
+    np.add_argument("--pack", choices=list(PACKS), help="standard (default) or minimal")
+    np.add_argument(
+        "--role", action="append", choices=list(ROLES), metavar="ROLE",
+        help=f"add the folders one kind of work needs; repeatable ({', '.join(ROLES)})",
+    )
+    np.add_argument(
+        "--add", action="append", choices=list(ADDONS), metavar="FOLDER",
+        help=f"add one add-on folder; repeatable ({', '.join(ADDONS)})",
+    )
+    np.add_argument(
+        "--folder", action="append", metavar="NAME=HOLDS",
+        help='add a folder of your own, e.g. --folder recipes="Cooking recipes: ingredients and steps"',
+    )
+    np.add_argument("--rename", action="append", metavar="OLD=NEW", help="rename a folder, e.g. --rename concepts=notes")
+    np.add_argument("--no-demo", action="store_true", help="skip the demo pages")
+    np.add_argument("--backup-hook", action="store_true", help="add a post-commit hook that pushes to your git remote")
+    np.add_argument("--dry-run", action="store_true", help="show the folders and CATEGORIES table without writing")
+    np.add_argument("--yes", action="store_true", help="never ask questions; use the options given (default: standard)")
+    np.set_defaults(func=cmd_init)
+
+    pr = sub.add_parser("presets", help="list the packs, roles, and add-on folders init can use")
+    pr.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    pr.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    pr.set_defaults(func=cmd_presets)
 
     lp = sub.add_parser("list", help="list bundled skills")
     lp.set_defaults(func=cmd_list)
@@ -968,6 +1200,15 @@ def build_parser() -> argparse.ArgumentParser:
     lt.add_argument("--strict", action="store_true", help="exit non-zero on warnings as well as failures")
     lt.set_defaults(func=cmd_lint)
 
+    ly = sub.add_parser(
+        "layout",
+        help="show the vault's page folders (CATEGORIES table in AGENTS.md) and which folder plays each role",
+    )
+    ly.add_argument("vault", nargs="?", help="path to the vault (defaults to configured OBSIDIAN_VAULT_PATH)")
+    ly.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ly.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ly.set_defaults(func=cmd_layout)
+
     qq = sub.add_parser(
         "query",
         help="query the configured vault without passing the raw path each time",
@@ -996,8 +1237,9 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 0
     # Warn about stale installs on every command except `setup` (which fixes it),
-    # `info` (which calls _check_stale itself), and `doctor` (which reports it).
-    if getattr(args, "command", None) not in ("setup", "info", "doctor", None):
+    # `info` (which calls _check_stale itself), `doctor` (which reports it), and
+    # `init`/`presets`, which commonly run before setup ever has.
+    if getattr(args, "command", None) not in ("setup", "info", "doctor", "init", "presets", None):
         _check_stale()
     try:
         return args.func(args)

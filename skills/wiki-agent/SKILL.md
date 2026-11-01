@@ -173,16 +173,17 @@ Open each selected session file and extract only the content relevant to the que
 For each extracted blob, determine where it belongs in the wiki:
 
 1. **Check if a wiki page already covers this** — grep `index.md` and page frontmatter for the topic. If yes, update the existing page rather than creating a new one.
-2. **Determine category** using standard rules (from `llm-wiki/SKILL.md`):
-   - Technique / how-to → `skills/`
+2. **Determine category** by walking the vault's CATEGORIES table (`AGENTS.md`; see Filing a page in `llm-wiki/SKILL.md`). In a standard vault:
+   - Technique / how-to → the `procedure` folder (`concepts/`, since standard has no separate how-to folder)
    - Abstract concept / pattern → `concepts/`
    - Tool / library / person → `entities/`
    - Cross-cutting insight → `synthesis/`
+   A role no row claims falls to the catch-all row; `llm-wiki layout --json` resolves them.
 3. **Write or update the page** with required frontmatter:
    ```yaml
    ---
    title: <topic>
-   category: skill|concept|entity|synthesis
+   category: <the folder you filed it in>
    tags: [tag1, tag2]
    sources: [<agent>://<path/to/session>]
    created: <date>

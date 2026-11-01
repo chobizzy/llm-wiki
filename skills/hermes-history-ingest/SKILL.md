@@ -125,15 +125,15 @@ Do not create one wiki page per memory or session.
 
 ## Step 5: Distill into Wiki Pages
 
-Route extracted knowledge using existing wiki conventions:
+Route extracted knowledge using existing wiki conventions — read the vault's CATEGORIES table (`AGENTS.md`, or `llm-wiki layout --json`) and use the folder holding each role; the paths below are a standard vault's, and a role no row claims falls to the catch-all row:
 
-- Project-specific architecture/process → `projects/<name>/...`
-- General concepts → `concepts/`
-- Recurring techniques/debug playbooks → `skills/`
-- Tools/services/frameworks → `entities/`
-- Cross-session patterns → `synthesis/`
+- Project-specific architecture/process → `projects/<name>/...` (only when a folder has the `project` role)
+- General concepts → `concept` folder (`concepts/`)
+- Recurring techniques/debug playbooks → `procedure` folder (`concepts/` in a standard vault; `skills/` where it still exists)
+- Tools/services/frameworks → `entity` folder (`entities/`)
+- Cross-session patterns → `synthesis` folder (`synthesis/`)
 
-For each impacted project, create/update `projects/<name>/<name>.md`.
+With a project folder, create/update `projects/<name>/<name>.md` for each impacted project. Without one, don't create `projects/` (law 3): file project-specific pages globally with `project: <name>` in their frontmatter.
 
 ### Writing rules
 

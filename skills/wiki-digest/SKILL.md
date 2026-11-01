@@ -31,7 +31,7 @@ You are generating a human-readable digest of recent wiki activity: what was lea
 Glob all `.md` files under `$OBSIDIAN_VAULT_PATH`. Skip special/system files:
 - `index.md`, `log.md`, `hot.md`, `AGENTS.md`, `_insights.md`
 - Anything under `_meta/`, `_archives/`, `_raw/`
-- Journal digest pages themselves (`journal/digest-*.md`)
+- Digest pages themselves (`digest-*.md`, in the journal folder — see Step 7)
 
 For each remaining page, read its frontmatter:
 - `created` — when the page was first written
@@ -58,7 +58,7 @@ Sort descending, take top 5
 
 Also read `$OBSIDIAN_VAULT_PATH/_meta/taxonomy.md` (if it exists). Flag any tag from step 1 that **does not appear** in the taxonomy — these are new vocabulary words that emerged this period.
 
-Note which categories grew most (concepts/, entities/, skills/, synthesis/, references/, etc.).
+Note which categories grew most — the folders in the vault's CATEGORIES table (`references/`, `entities/`, `synthesis/`, `concepts/` in a standard vault, plus any the owner added).
 
 ## Step 3: Find Notable New Connections
 
@@ -161,12 +161,14 @@ Most active category: **[category/]** ([N pages added or updated])
 
 ## Step 7: Output & Optionally Save
 
+Digests are saved in the folder with the `journal` role (`journal/` when the vault has one — the personal role adds it; otherwise the catch-all folder that `llm-wiki layout --json` names for `journal`). Below, `journal/` means that folder.
+
 **Default (chat output):** Print the digest directly. At the end, ask:
 *"Want me to save this as `journal/digest-YYYY-MM-DD.md`?"*
 
 **If user prefixed with "save" or "write"** (e.g., `/wiki-digest save` or "generate and save my weekly digest"):
 - Write to `$OBSIDIAN_VAULT_PATH/journal/digest-YYYY-MM-DD.md` (weekly/monthly) or `journal/digest-YYYY-MM-DD-daily.md` (daily)
-- Add frontmatter:
+- Add frontmatter (`category:` is the folder you wrote it to; in a single-folder vault, `concepts`):
   ```yaml
   ---
   title: "Wiki Digest — [Period Label]"

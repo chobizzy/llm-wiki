@@ -27,7 +27,7 @@ object rather than raising — check `isinstance(result, Exception)` on each ite
 Fields of interest:
 - `tags` — maps directly to wiki tags; normalize to kebab-case
 - `created_at` — use for provenance / journal category decisions
-- `project` — route to `projects/<project>/` when set
+- `project` — route to `projects/<project>/` when set and the vault has a project folder; otherwise record it as `project: <project>` in frontmatter
 
 ### JSON memories (`*.json`)
 
@@ -97,7 +97,7 @@ sessions/
 }
 ```
 
-`cwd` is the most reliable project inference signal — use it to route knowledge to the right `projects/<name>/` page.
+`cwd` is the most reliable project inference signal — use it to route knowledge to the right `projects/<name>/` page (or, in a vault without a project folder, to set `project: <name>` in frontmatter).
 
 ## config.yaml
 

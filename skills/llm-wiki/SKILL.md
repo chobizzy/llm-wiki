@@ -41,22 +41,44 @@ The rules governing how the wiki is structured — categories, conventions, page
 
 The vault has two levels of structure: **categories** (what kind of knowledge) and **projects** (where the knowledge came from).
 
-### Categories
+### Categories: each vault declares its own
 
-Organize pages into these default categories (customizable in `.env`):
+The folders that hold pages are listed in the **CATEGORIES table** of the vault's `AGENTS.md`. The standard pack has one folder per page type named in Karpathy's gist:
 
-| Category | Purpose | Example |
+| Folder | Holds | Role |
 |---|---|---|
-| `concepts/` | Ideas, theories, mental models | `concepts/transformer-architecture.md` |
-| `entities/` | People, orgs, tools, projects | `entities/andrej-karpathy.md` |
-| `skills/` | How-to knowledge, procedures | `skills/fine-tuning-llms.md` |
-| `references/` | Summaries of specific sources; academic papers use the Paper Deep-Dive Template (below) | `references/attention-is-all-you-need.md` |
-| `synthesis/` | Cross-cutting analysis across sources | `synthesis/scaling-laws-debate.md` |
-| `journal/` | Timestamped observations, session logs | `journal/2024-03-15.md` |
+| `references/` | One page per ingested source; cites the `_inbox/` original | reference |
+| `entities/` | One page per proper noun: person, tool, organization, product | entity |
+| `synthesis/` | Insights and comparisons that only exist by combining several pages | synthesis |
+| `concepts/` | Ideas, patterns, mental models, how-tos — and anything no row above fits | concept |
+
+The **minimal** pack has a single `wiki/` folder whose pages keep their kind in `category:` (`references`, `entities`, `synthesis` or `concepts`). On the standard pack, roles add folders — `courses/`, `questions/`, `projects/`, `ideas/` and `outputs/`, `meetings/` and `decisions/`, `journal/` — and the owner can add folders of their own. `llm-wiki presets` lists them all.
+
+**Never assume folder names.** Read the vault's CATEGORIES table before writing, or run `llm-wiki layout --json`, which also resolves roles. A vault whose `AGENTS.md` has no CATEGORIES table predates it and keeps the original seven folders: `journal/`, `projects/`, `references/`, `entities/`, `skills/`, `synthesis/`, `concepts/`.
+
+**Filing a page:** walk the rows top-down; the first row whose *Holds* fits the page wins, and the last row takes everything else. Set `category:` to the folder name — except in a single-folder vault, whose row says to use the page's kind instead. Example paths in these skills use the standard folder names; substitute the vault's own.
+
+### Roles
+
+Some operations need a particular kind of folder — the place for source summaries, for dated logs — whatever this vault calls it. The table's *Role* column says which folder plays which part:
+
+| Role | The folder for | Standard vault | Written by |
+|---|---|---|---|
+| `reference` | one page per ingested source | `references/` | `wiki-ingest` (papers, URLs), `wiki-capture`, `wiki-research` |
+| `entity` | proper nouns: people, tools, organizations | `entities/` | `wiki-ingest` (code entities), history ingests |
+| `synthesis` | insights that combine pages | `synthesis/` | `wiki-synthesize`, `wiki-research`, `wiki-lint --consolidate` |
+| `concept` | ideas, patterns, mental models | `concepts/` | anything without a more specific home |
+| `journal` | dated logs, one page per day | `journal/`, added by the personal role | `wiki-capture` session summaries, `wiki-digest` |
+| `project` | one overview page per project | `projects/`, added by the indie-hacker role | history ingests, `wiki-ingest`, `wiki-update` |
+| `procedure` | step-by-step how-tos | `skills/`, in the original layout only | history ingests (recurring fixes) |
+
+**A role no row claims falls to the last row**, the catch-all: in a standard vault journal pages land in `concepts/`, and in a minimal vault every role lands in `wiki/`. `llm-wiki layout --json` prints the resolved `roles` map. When a skill says "the `synthesis` folder", it means whichever folder that map names.
 
 ### Projects
 
-Knowledge often belongs to a specific project. The `projects/` directory mirrors this:
+Knowledge often belongs to a specific project. **When a folder has the `project` role** (`projects/` by default), it mirrors this. **When none does**, don't create a `projects/` folder — that breaks law 3. File every page in the top-level folders and record the project in frontmatter as `project: <project-name>` instead.
+
+With a project folder, the vault looks like this:
 
 ```
 $OBSIDIAN_VAULT_PATH/
@@ -64,7 +86,7 @@ $OBSIDIAN_VAULT_PATH/
 │   ├── my-project/
 │   │   ├── my-project.md      ← project overview (named after project)
 │   │   ├── concepts/          ← project-scoped category pages
-│   │   ├── skills/
+│   │   ├── references/
 │   │   └── ...
 │   ├── another-project/
 │   │   └── ...
@@ -72,15 +94,15 @@ $OBSIDIAN_VAULT_PATH/
 │       └── ...
 ├── concepts/                   ← global (cross-project) knowledge
 ├── entities/
-├── skills/
+├── references/
 └── ...
 ```
 
-**When knowledge is project-specific** (a debugging technique that only applies to one codebase, a project-specific architecture decision), put it under `projects/<project-name>/<category>/`.
+**When knowledge is project-specific** (a debugging technique that only applies to one codebase, a project-specific architecture decision), put it under `projects/<project-name>/<category>/`, where `<category>` is one of the vault's category folders.
 
-**When knowledge is general** (a concept like "React Server Components", a person like "Andrej Karpathy", a widely applicable skill), put it in the global category directory.
+**When knowledge is general** (a concept like "React Server Components", a person like "Andrej Karpathy", a widely applicable technique), put it in the global category directory.
 
-**Cross-referencing:** Project pages should `[[wikilink]]` to global pages and vice versa. A project's overview page should link to the key concept, skill, and entity pages relevant to that project — whether they live under the project or globally.
+**Cross-referencing:** Project pages should `[[wikilink]]` to global pages and vice versa. A project's overview page should link to the key concept and entity pages relevant to that project — whether they live under the project or globally.
 
 **Naming rule:** The project overview file must be named `<project-name>.md`, not `_project.md`. Obsidian's graph view uses the filename as the node label — `_project.md` makes every project appear as `_project` in the graph, making it unreadable. So `projects/my-project/my-project.md`, `projects/another-project/another-project.md`, etc.
 
@@ -89,7 +111,7 @@ Each project directory has an overview page structured like this:
 ```markdown
 ---
 title: My Project
-category: project
+category: projects
 tags: [ai, web, backend]
 source_path: ~/.claude/projects/-Users-name-Documents-projects-my-project
 created: 2026-03-01T00:00:00Z
@@ -113,7 +135,7 @@ One-paragraph summary of what this project is.
 Every wiki has these files at its root:
 
 ### `index.md`
-A content-oriented catalog organized by category. Each entry has a one-line summary and tags. Rebuild this after every ingest operation. Format:
+A content-oriented catalog organized by category: one `## <Folder>` section per CATEGORIES row, in table order (a single-folder vault has one section per kind instead), then `## Meta`. Create a section when its first page lands. Each entry has a one-line summary and tags. Rebuild this after every ingest operation. Format:
 
 ```markdown
 # Wiki Index
@@ -155,6 +177,25 @@ The manifest enables:
 
 **Recording provenance.** When you write a manifest entry, populate `pages_created` and `pages_updated` with the vault-relative page paths that source contributed to. This is what makes re-ingestion (when a source changes) able to find the pages to revisit, instead of guessing.
 
+### `_meta/trust-ledger.md`
+One line per automated skill run, appended by the skill after its deterministic gate; pass rates over it justify giving a loop more autonomy (graduated trust). It doesn't ship with a new vault: the first skill that logs a gate outcome creates it with exactly this header, then appends its line.
+
+```markdown
+---
+title: Trust Ledger
+category: meta
+tags: [meta, wiki-ops]
+sources: [system]
+summary: Per-skill gate outcomes — one line per automated run; pass rates drive graduated-trust autonomy reviews.
+created: <YYYY-MM-DD>
+updated: <YYYY-MM-DD>
+---
+
+# Trust Ledger
+
+*One line per skill run, appended by the skill itself after its deterministic gate (see [[AGENTS]]). Format: `- [ISO-8601Z] skill=<name> agent=<agent> gate=pass|fail notes="<one line>"`. Pass rates over this ledger justify autonomy-level transitions — reviewed by the owner, never self-promoted.*
+```
+
 ## Page Template
 
 When creating a new wiki page, use this structure:
@@ -162,7 +203,7 @@ When creating a new wiki page, use this structure:
 ```markdown
 ---
 title: Page Title
-category: concepts
+category: concepts   # the page's folder in the CATEGORIES table
 tags: [ml, architecture]
 aliases: [alternate name]
 relationships:
@@ -205,7 +246,7 @@ Things that are unresolved or need more sources.
 
 ## Paper Deep-Dive Template
 
-The generic template suits most sources. **Academic papers are the exception.** For ML/AI/LLM/VLM (and similar) papers landing in `references/`, the substance lives in the architecture, the equations, and the results table — exactly what a terse "Key Ideas" list flattens away. For these, use the richer template below. This is the one place where *"compile, don't retrieve"* yields to a thorough, self-contained walkthrough a reader could study instead of the paper.
+The generic template suits most sources. **Academic papers are the exception.** For ML/AI/LLM/VLM (and similar) papers landing in the `reference` folder (`references/` in a standard vault), the substance lives in the architecture, the equations, and the results table — exactly what a terse "Key Ideas" list flattens away. For these, use the richer template below. This is the one place where *"compile, don't retrieve"* yields to a thorough, self-contained walkthrough a reader could study instead of the paper.
 
 Obsidian renders the needed primitives natively, so no extra tooling is required: Mermaid fenced diagrams, `$$…$$` LaTeX (MathJax), markdown tables, and `![[image]]` / `![[paper.pdf#page=N]]` embeds.
 
@@ -213,7 +254,7 @@ Use this template only when the source is an academic paper (arXiv/conference) w
 
 ````markdown
 ---
-# ...required frontmatter, same as the generic template; category: references...
+# ...required frontmatter, same as the generic template; category: the reference folder...
 ---
 
 # Paper Title
@@ -560,7 +601,7 @@ STATE_DIR="$HOME/.llm-wiki/state/$VAULT_ID"
 
 Every skill's setup section should read:
 
-> **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md`. Honor an inline `@name` override first, then walk up from CWD for `.env`, fall back to `~/.llm-wiki/config`, else prompt setup. This gives `OBSIDIAN_VAULT_PATH` and any tool-specific path overrides.
+> **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md`. Honor an inline `@name` override first, then walk up from CWD for `.env`, fall back to `~/.llm-wiki/config`, else prompt setup. This gives `OBSIDIAN_VAULT_PATH` and any tool-specific path overrides. Then read the vault's `AGENTS.md`, including its CATEGORIES table (or run `llm-wiki layout --json`), so every page lands in a folder the vault actually has.
 
 ## Environment Variables
 
@@ -568,13 +609,14 @@ The wiki is configured through environment variables (see `.env.example`). The o
 
 - `OBSIDIAN_VAULT_PATH` — Where the wiki lives **(required)**
 - `OBSIDIAN_SOURCES_DIR` — Where raw source documents are
-- `OBSIDIAN_CATEGORIES` — Comma-separated list of categories
 - `WIKI_SKIP_PROJECTS` — Comma-separated substrings; any project dir whose name contains one is excluded from history ingest (scan + delta + manifest). See the "Project Scoping" step in the history-ingest skills.
 - `CLAUDE_HISTORY_PATH` — Where to find Claude conversation data
 - `HERMES_HOME` — Where to find Hermes agent data
 - `OBSIDIAN_LINK_FORMAT` — Internal link syntax: `wikilink` (default) or `markdown`
 - `WIKI_TOKEN_WARN_THRESHOLD` — Emit a warning in `wiki-status` when the full-wiki token estimate exceeds this value (default: `100000`). Set to `0` to disable. See `wiki-status` for the token footprint report.
 - `WIKI_STAGED_WRITES` — When `true`, all LLM-written pages go to `_staging/<category>/` for human review before promotion. See `wiki-setup` and `wiki-stage-commit` for details.
+
+The vault's folders are not an environment variable: they live in the CATEGORIES table of the vault's `AGENTS.md` (see Wiki Organization), so they travel with the vault in git.
 
 No API keys are needed — the agent running these skills already has LLM access built in.
 

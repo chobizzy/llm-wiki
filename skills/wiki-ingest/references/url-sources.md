@@ -4,10 +4,16 @@ Reference for the `wiki-ingest` skill when the source is a **web URL** rather th
 Triggered by `/ingest-url <url>`, "add this URL", "ingest this link", "save this page", or a pasted
 URL with "add this" / "save this to my wiki".
 
-Where the page lands depends on whether you can detect a current project — if yes, it goes straight
-into that project's folder; if not, it goes to `misc/` and is promoted later based on connection
-affinity. Config resolution, the content trust boundary, and the QMD refresh step are the same as the
-main `wiki-ingest/SKILL.md` — follow those; this file only covers the URL-specific mechanics.
+Where the page lands depends on whether you can detect a current project — if yes, and the vault has a
+project folder, it goes straight into that project's folder; if not, it goes into the vault's reference
+folder marked `promotion_status: misc`, and is promoted later based on connection affinity. Config
+resolution, the content trust boundary, and the QMD refresh step are the same as the main
+`wiki-ingest/SKILL.md` — follow those; this file only covers the URL-specific mechanics.
+
+**Folder names.** Below, `projects/` means the folder with the `project` role and `references/` the
+folder with the `reference` role in the vault's CATEGORIES table (`llm-wiki layout --json`). A standard
+vault has `references/` but no project folder unless the owner added one (the indie-hacker role does).
+Never create a folder the table doesn't list (law 3) — "misc" is a status in frontmatter, not a folder.
 
 ## Step U0: Detect Current Project
 
@@ -18,17 +24,18 @@ Before fetching anything, determine whether the user is working inside a specifi
 1. **Git remote name** — run `git remote get-url origin 2>/dev/null` from the current working directory. Strip the host, org, and `.git` suffix to get the repo name. Example: `https://github.com/acme/my-app.git` → `my-app`.
 2. **Package metadata** — if no git remote, check `package.json` (`name` field), `pyproject.toml` (`[project] name`), `Cargo.toml` (`[package] name`), `go.mod` (module path last segment), in that order.
 3. **Directory name** — if none of the above work, use the basename of the current working directory.
-4. **No project context** — if the current directory IS the llm-wiki repo itself, or if detection produces a name that matches the wiki vault directory, treat it as "no project context" and fall back to `misc/`.
+4. **No project context** — if the current directory IS the llm-wiki repo itself, or if detection produces a name that matches the wiki vault directory, treat it as "no project context" and fall back to misc mode.
 
 **Normalise the project name:** lowercase, replace spaces and underscores with `-`, strip leading dots.
 
-Once you have a candidate name, check whether `$OBSIDIAN_VAULT_PATH/projects/<project-name>/` exists:
+Once you have a candidate name, check whether the vault has a project folder, and whether `$OBSIDIAN_VAULT_PATH/projects/<project-name>/` exists:
 
 | Situation | Action |
 |---|---|
-| Project detected + folder **exists** | Add page to existing project (Step U3a) |
-| Project detected + folder **does not exist** | Create project structure, then add page (Step U3b) |
-| No project context | Fall back to `misc/` (Step U3c) |
+| Project detected + project folder **exists** | Add page to existing project (Step U3a) |
+| Project detected + project folder **does not exist** | Create project structure, then add page (Step U3b) |
+| Project detected, but the vault has **no project folder** | Misc mode (Step U3c), with `project: "<project-name>"` in frontmatter |
+| No project context | Misc mode (Step U3c) |
 
 ## Step U0.5: Clean Extraction Preflight
 
@@ -53,7 +60,7 @@ Use `WebFetch` to retrieve the content at the provided URL (or skip if `defuddle
 Before creating a new page, check whether this URL was already ingested:
 - Grep `.manifest.json` for the URL string in any `source_url` field
 - If in project mode: grep `$OBSIDIAN_VAULT_PATH/projects/<project-name>/` for the URL string
-- If in misc mode: grep `$OBSIDIAN_VAULT_PATH/misc/` for the URL string
+- If in misc mode: grep the reference folder (and a legacy `$OBSIDIAN_VAULT_PATH/misc/`, if one exists) for the URL string
 
 If found: report which page covers it and offer to re-ingest (update) if the user wants fresh content. Do not create a duplicate page.
 
@@ -79,21 +86,19 @@ Create `references/` inside the project folder if it doesn't exist yet. This is 
 
 ### Step U3b: New project
 
-First, create the project skeleton:
+First, create the project skeleton. Subfolders reuse the vault's category folder names; create only the ones you need now:
 
 ```
 projects/<project-name>/
 ├── <project-name>.md          ← project overview (stub — fill in what you know)
-├── concepts/
-├── references/
-└── skills/
+└── references/
 ```
 
 The project overview stub (`<project-name>.md`) frontmatter:
 ```yaml
 ---
 title: "<Project Name>"
-category: project
+category: projects
 tags: []
 sources: []
 created: "<ISO-8601 timestamp>"
@@ -106,11 +111,11 @@ Then add the page to: `projects/<project-name>/references/<slug>.md`
 
 Report to the user: "Created new project `<project-name>` in the vault."
 
-### Step U3c: No project context (misc fallback)
+### Step U3c: Misc mode (no project folder to file it in)
 
-Target: `$OBSIDIAN_VAULT_PATH/misc/<slug>.md`
-
-Create the `misc/` directory if it does not exist yet.
+Target: `$OBSIDIAN_VAULT_PATH/references/<slug>.md` — the reference folder, with `promotion_status: misc`
+in frontmatter so affinity scoring can promote it to a project later. In a single-folder vault this is
+the one folder (`wiki/`).
 
 ## Step U4: Extract Knowledge
 
@@ -155,11 +160,11 @@ lifecycle_changed: "<ISO date today>"
 ---
 ```
 
-**Misc mode** (`misc/<slug>.md`):
+**Misc mode** (`references/<slug>.md`; add `project: "<project-name>"` when a project was detected):
 ```yaml
 ---
 title: "<page title>"
-category: misc
+category: references
 tags: [<2-4 domain tags from taxonomy>]
 sources:
   - "<URL>"
@@ -223,7 +228,7 @@ Write the result to the `affinity` frontmatter block. Leave `affinity: {}` if no
 
 If any project's score ≥ 3, surface it:
 
-> ⚡ Strong affinity detected: this page has **3+ connections** to `<project-name>`. Run the `cross-linker` skill to recompute affinity and then consider promoting this page to `projects/<project-name>/references/`.
+> ⚡ Strong affinity detected: this page has **3+ connections** to `<project-name>`. Run the `cross-linker` skill to recompute affinity and then consider promoting this page to `projects/<project-name>/references/` (or, in a vault without a project folder, setting `project: "<project-name>"` and removing `promotion_status`).
 
 ## Step U6: Update Project Overview (project mode only)
 
@@ -260,7 +265,7 @@ Update `stats.total_sources_ingested` and `stats.total_pages`.
 
 **`index.md`** — add the new page under the appropriate section:
 - Project mode: under `## Projects > <project-name>`
-- Misc mode: under `## Misc` (create the section at the bottom if it doesn't exist)
+- Misc mode: under the reference folder's section (`## References` in a standard vault)
 
 **`log.md`** — append:
 
@@ -271,7 +276,7 @@ Project mode:
 
 Misc mode:
 ```
-- [TIMESTAMP] INGEST_URL url="<url>" page="misc/<slug>.md" affinity={} promotion_status=misc mode=misc
+- [TIMESTAMP] INGEST_URL url="<url>" page="references/<slug>.md" affinity={} promotion_status=misc mode=misc
 ```
 
 **`hot.md`** — Update **Recent Activity** with what was just ingested — keep the last 3 operations. Update **Key Takeaways** if the page introduced a concept worth flagging. Update `updated` timestamp.

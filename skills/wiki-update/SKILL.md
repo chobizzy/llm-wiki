@@ -71,15 +71,16 @@ The heuristic: **if reading the codebase answers the question, don't wiki it. If
 
 ## Step 4: Distill into Wiki Pages
 
+Read the vault's CATEGORIES table first (`AGENTS.md`, or `llm-wiki layout --json`): pages go only in the folders it lists. The folder names below are the standard vault's.
+
 ### Project-specific knowledge
 
-Goes under `$VAULT/projects/<project-name>/`:
+When the vault has a folder with the `project` role (`projects/` by default), project knowledge goes under `$VAULT/projects/<project-name>/`, in subfolders named after the vault's category folders:
 
 ```
 projects/<project-name>/
 ├── <project-name>.md          ← project overview (named after the project, NOT _project.md)
-├── concepts/                  ← project-specific ideas, architectures
-├── skills/                    ← project-specific how-tos, patterns
+├── concepts/                  ← project-specific ideas, architectures, how-tos
 └── references/                ← project-specific source summaries
 ```
 
@@ -88,16 +89,20 @@ The overview page (`<project-name>.md`) should have:
 - Key concepts and how they connect
 - Links to project-specific and global wiki pages
 
+When the vault has no project folder, file project knowledge in the global folders below and add `project: <project-name>` to each page's frontmatter. Don't create a `projects/` folder the table doesn't list (law 3).
+
 ### Global knowledge
 
-Things that aren't project-specific go in the global categories:
+Things that aren't project-specific go in the global categories — the folder with each role:
 
-| What you found | Where it goes |
+| What you found | Role (standard folder) |
 |---|---|
-| A general concept learned | `concepts/` |
-| A reusable pattern or technique | `skills/` |
-| A tool/service/person | `entities/` |
-| Cross-project analysis | `synthesis/` |
+| A general concept learned | `concept` (`concepts/`) |
+| A reusable pattern or technique | `procedure` (`concepts/` in a standard vault; `skills/` in vaults that still have it) |
+| A tool/service/person | `entity` (`entities/`) |
+| Cross-project analysis | `synthesis` (`synthesis/`) |
+
+A role no row claims falls to the catch-all (last) row.
 
 ### Page format
 

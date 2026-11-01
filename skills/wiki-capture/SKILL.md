@@ -83,17 +83,19 @@ If nothing material emerged, tell the user and stop.
 
 ## Step 2: Classify the Content Type
 
-Assign one of five types — this determines the target folder and tone:
+Assign one of five types — this sets the tone and the default folder:
 
-| Type | Description | Target folder |
+| Type | Description | Folder: the one with this role (standard name) |
 |---|---|---|
-| `synthesis` | Multi-step analysis or an answer to a specific question that required reasoning | `synthesis/` |
-| `concept` | A definition, framework, or mental model (what a thing *is*) | `concepts/` |
-| `source` | Summary of an external document, article, or resource discussed | `references/` |
-| `decision` | A strategic, architectural, or design choice and its rationale | `synthesis/` |
-| `session` | A complete discussion summary when the conversation spans multiple topics | `journal/` |
+| `synthesis` | Multi-step analysis or an answer to a specific question that required reasoning | `synthesis` (`synthesis/`) |
+| `concept` | A definition, framework, or mental model (what a thing *is*) | `concept` (`concepts/`) |
+| `source` | Summary of an external document, article, or resource discussed | `reference` (`references/`) |
+| `decision` | A strategic, architectural, or design choice and its rationale | `synthesis` (`synthesis/`) |
+| `session` | A complete discussion summary when the conversation spans multiple topics | `journal` (`journal/`, when the vault has one) |
 
-If the content clearly belongs to a specific project (detected from context or user mention), place it under `projects/<project-name>/<category>/` instead.
+Then check the vault's CATEGORIES table (`AGENTS.md`): if a row fits the content better than the default — a `decisions/` folder for a decision, an `ideas/` folder for a content idea — file it there. A role no row claims falls to the last row; `llm-wiki layout --json` resolves them. With no journal folder, write a `session` as declarative pages of the other types rather than parking a dated summary in the catch-all.
+
+If the content clearly belongs to a specific project (detected from context or user mention), place it under `projects/<project-name>/<category>/` when the vault has a `project` folder. Without one, file it normally and add `project: <project-name>` to its frontmatter.
 
 ## Step 3: Rewrite as Declarative Knowledge
 
@@ -124,7 +126,7 @@ Create the file at the target path with required frontmatter:
 ---
 title: >-
   <Title>
-category: <synthesis|concepts|references|journal|skills>
+category: <the folder you filed it in (in a single-folder vault, its kind: references|entities|synthesis|concepts)>
 tags: [<2-5 domain tags from taxonomy>]
 sources:
   - conversation:<ISO-date>
@@ -249,7 +251,7 @@ Type: synthesis
 ## Quality Checklist
 
 - [ ] Content rewritten as declarative knowledge (not a chat transcript)
-- [ ] Type classified correctly; target path is in the right folder
+- [ ] Type classified correctly; target path is a folder from the vault's CATEGORIES table
 - [ ] Frontmatter complete with title, category, tags, sources, summary, provenance
 - [ ] At least 2 wikilinks to existing pages
 - [ ] `index.md`, `log.md`, and `hot.md` updated

@@ -68,10 +68,10 @@ Filter `tool_pages[<tool>]` and present as a grouped list:
 ```
 ## Knowledge from <tool> (<N> pages)
 
-### By category
-- concepts/ — N pages
-- entities/ — N pages
-- skills/   — N pages
+### By category (one line per folder in the vault's CATEGORIES table)
+- references/ — N pages
+- entities/   — N pages
+- concepts/   — N pages
 ...
 
 ### Pages

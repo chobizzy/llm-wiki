@@ -11,7 +11,8 @@ import unittest
 from pathlib import Path
 from typing import Any
 
-from llm_wiki.lint import CONTENT_DIRS, VALID_LIFECYCLE, lint_vault
+from llm_wiki.layout import LEGACY_LAYOUT
+from llm_wiki.lint import VALID_LIFECYCLE, lint_vault
 
 PAGE = """---
 title: {title}
@@ -149,8 +150,9 @@ class RequiredLifecycleTests(unittest.TestCase):
         self._write("concepts/thing.md", "draft")
         self.assertEqual(self._missing(), [])
 
-    def test_every_content_folder_requires_it(self):
-        for folder in sorted(CONTENT_DIRS):
+    def test_every_original_folder_requires_it_without_a_table(self):
+        # No AGENTS.md here, so the vault keeps the original seven-folder layout.
+        for folder in sorted(LEGACY_LAYOUT.folders):
             with self.subTest(folder=folder):
                 self._write(f"{folder}/thing.md", None)
                 self.assertEqual(
@@ -177,6 +179,84 @@ class RequiredLifecycleTests(unittest.TestCase):
         [finding] = [f for f in self._missing() if "bare" in f["page"]]
         self.assertIn("lifecycle", finding["missing"])
         self.assertIn("sources", finding["missing"])
+
+
+AGENTS = """---
+title: AGENTS
+category: meta
+tags: [meta]
+sources: [owner]
+summary: The constitution.
+created: 2026-01-01
+updated: 2026-01-01
+---
+
+# AGENTS.md
+
+## CATEGORIES
+
+{table}
+## DONE
+
+Links [[other]] so this page is not an orphan.
+"""
+
+WIKI_TABLE = "| Folder | Holds | Role |\n|---|---|---|\n| `wiki/` | Every page | concept |\n"
+
+
+class LayoutAwareLintTests(unittest.TestCase):
+    """Law 3's folders come from the vault's CATEGORIES table when it has one."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.vault = Path(self._tmp.name)
+        self.addCleanup(self._tmp.cleanup)
+        (self.vault / "other.md").write_text(OTHER, encoding="utf-8")
+
+    def _agents(self, table: str) -> None:
+        (self.vault / "AGENTS.md").write_text(AGENTS.format(table=table), encoding="utf-8")
+
+    def _write(self, relpath: str) -> None:
+        target = self.vault / relpath
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(PAGE.format(title=target.stem.title(), lifecycle_line=""), encoding="utf-8")
+
+    def _missing_pages(self) -> list[str]:
+        return [f["page"] for f in lint_vault(self.vault)["findings"]["missing_frontmatter"]]
+
+    def test_declared_folder_requires_lifecycle(self):
+        self._agents(WIKI_TABLE)
+        self._write("wiki/thing.md")
+        self.assertEqual(self._missing_pages(), [str(Path("wiki/thing.md"))])
+
+    def test_original_folder_is_not_a_category_once_a_table_exists(self):
+        self._agents(WIKI_TABLE)
+        self._write("concepts/thing.md")
+        self.assertEqual(self._missing_pages(), [])
+
+    def test_report_names_the_layout_it_applied(self):
+        self._agents(WIKI_TABLE)
+        self.assertEqual(lint_vault(self.vault)["layout"], {"source": "AGENTS.md", "folders": ["wiki"]})
+
+    def test_vault_without_a_table_reports_the_original_layout(self):
+        layout = lint_vault(self.vault)["layout"]
+        self.assertEqual(layout["source"], "default")
+        self.assertEqual(set(layout["folders"]), set(LEGACY_LAYOUT.folders))
+
+    def test_broken_table_fails_the_gate(self):
+        self._agents("| Folder | Holds |\n|---|---|\n| `wiki/` | Every page |\n")
+        report = lint_vault(self.vault)
+        self.assertEqual(report["status"], "fail")
+        self.assertEqual(report["layout"]["source"], "invalid")
+        self.assertEqual(
+            report["findings"]["invalid_layout"],
+            [{"page": "AGENTS.md", "problem": "the CATEGORIES table has no Role column"}],
+        )
+
+    def test_broken_table_still_runs_the_other_checks_on_the_original_layout(self):
+        self._agents("| Folder | Holds |\n|---|---|\n| `wiki/` | Every page |\n")
+        self._write("concepts/thing.md")
+        self.assertEqual(self._missing_pages(), [str(Path("concepts/thing.md"))])
 
 
 if __name__ == "__main__":

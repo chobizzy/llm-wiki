@@ -97,7 +97,7 @@ Record counts: `created = 0`, `skipped = 0`, `merged = 0`.
 
 For each node in `nodes`:
 
-1. Compute `page_path = $VAULT/<node.id>.md`
+1. Compute `page_path = $VAULT/<node.id>.md`. **Fit it to this vault's layout:** if the id's top folder isn't in the vault's CATEGORIES table (`AGENTS.md`, or `llm-wiki layout --json`), re-file the page into the folder holding the matching role — for the original folder names: `journal`→journal, `projects`→project, `references`→reference, `entities`→entity, `skills`→procedure, `synthesis`→synthesis, `concepts`→concept; anything else goes to the catch-all (last) row. Set `category:` to match and count re-filed pages for the report. Never create a folder the table doesn't list (law 3).
 2. Ensure the parent directory exists (e.g. `$VAULT/concepts/`)
 3. Check if the file already exists:
    - **merge mode (default) + exists** → read existing file, apply merge logic (see below), increment `merged`
@@ -168,7 +168,7 @@ Record counts: `created = 0`, `skipped = 0`, `merged = 0`, `unparseable = 0`.
 Walk the bundle directory tree. For each `.md` file that is **not** a reserved file (`index.md`, `log.md`):
 
 1. Parse the YAML frontmatter. If it has no frontmatter or no non-empty `type`, increment `unparseable` and skip the file.
-2. Compute the **concept id** = the file's path relative to the bundle root, with `.md` stripped (e.g. `concepts/transformers.md` → `concepts/transformers`). The target page is `$VAULT/<concept-id>.md`.
+2. Compute the **concept id** = the file's path relative to the bundle root, with `.md` stripped (e.g. `concepts/transformers.md` → `concepts/transformers`). The target page is `$VAULT/<concept-id>.md` — fitted to this vault's layout exactly as in Step 4-Graph, item 1, when the id's top folder isn't in the CATEGORIES table.
 3. **Reverse-map frontmatter** (the inverse of the canonical mapping table in `wiki-export` Step 3.5):
    - `title` ← `title`.
    - `category` ← the preserved `category` extension key if present; **else** lower-case the directory prefix of the concept id (`concepts/…` → `concepts`); **else** derive from `type` (`Concept`→`concepts`, `Entity`→`entities`, `Skill`→`skills`, `Reference`→`references`, `Synthesis`→`synthesis`, `Project`→`projects`, `Journal`→`journal`).

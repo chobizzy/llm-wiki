@@ -16,7 +16,8 @@ You are running an autonomous research loop on a topic, synthesizing what you fi
 1. **Resolve config** — follow the Config Resolution Protocol in `llm-wiki/SKILL.md` (inline `@name` override → walk up CWD for `.env` → `~/.llm-wiki/config` → prompt setup). This gives `OBSIDIAN_VAULT_PATH` and `OBSIDIAN_LINK_FORMAT` (default: `wikilink`).
 2. Read `$OBSIDIAN_VAULT_PATH/index.md` to understand what's already in the wiki — don't re-research things the wiki covers well
 3. Read `$OBSIDIAN_VAULT_PATH/hot.md` if it exists — it surfaces recent context
-4. Check `$OBSIDIAN_VAULT_PATH/references/research-config.md` if it exists — it may define source preferences, domains to skip, or confidence rules for this vault
+4. Check `$OBSIDIAN_VAULT_PATH/_meta/research-config.md` if it exists (older vaults keep it at `references/research-config.md`) — it may define source preferences, domains to skip, or confidence rules for this vault
+5. Read the CATEGORIES table in `AGENTS.md` (or run `llm-wiki layout --json`). The output below goes to the folders holding the `reference`, `concept`, `entity` and `synthesis` roles — `references/`, `concepts/`, `entities/` and `synthesis/` in a standard vault; any role no row claims falls to the catch-all row.
 
 When writing internal links in generated pages, apply the link format from `llm-wiki/SKILL.md` (Link Format section) using the `OBSIDIAN_LINK_FORMAT` value.
 
@@ -24,7 +25,7 @@ Confirm the research topic with the user if it's ambiguous. Then proceed.
 
 ## Research Configuration (optional)
 
-If `references/research-config.md` exists in the vault, read it and apply any rules it defines:
+If `_meta/research-config.md` (or the older `references/research-config.md`) exists in the vault, read it and apply any rules it defines:
 - Source preferences (e.g., prefer academic sources, avoid certain domains)
 - Domains to skip
 - Confidence scoring adjustments
@@ -76,7 +77,7 @@ If contradictions are minor or the topic feels well-covered after Round 2, skip 
 
 Organize all findings into wiki pages across four output areas:
 
-### 1. sources/ — One page per major reference
+### 1. The reference folder — one page per major source
 
 For each significant source (typically 4-8 pages total):
 
@@ -84,7 +85,7 @@ For each significant source (typically 4-8 pages total):
 ---
 title: >-
   <Source title>
-category: references
+category: references   # the folder you wrote it to (in a single-folder vault: references)
 tags: [<2-4 domain tags>]
 sources:
   - "<URL>"
@@ -105,19 +106,19 @@ lifecycle_changed: <ISO date today>
 
 Body: title, URL, what it covers, key claims (with provenance markers), limitations.
 
-### 2. concepts/ — One page per substantive concept
+### 2. The concept folder — one page per substantive concept
 
 For each significant concept surfaced across sources:
 
 Standard concept frontmatter + body. Link concepts to each other and to source pages.
 
-### 3. entities/ — Tools, organizations, people
+### 3. The entity folder — tools, organizations, people
 
 For each significant entity encountered (tools, libraries, companies, key authors):
 
 Standard entity frontmatter. Link back to concepts that use the entity and sources where it appears.
 
-### 4. synthesis/Research: [Topic].md — Master synthesis
+### 4. `<synthesis folder>/Research: [Topic].md` — Master synthesis
 
 The primary output: a structured synthesis of everything found.
 
@@ -125,7 +126,7 @@ The primary output: a structured synthesis of everything found.
 ---
 title: >-
   Research: <Topic>
-category: synthesis
+category: synthesis   # the folder you wrote it to (in a single-folder vault: synthesis)
 tags: [<3-5 domain tags>, research]
 sources: [<list of source URLs or page paths>]
 created: <ISO-8601 timestamp>
@@ -198,7 +199,7 @@ Check `index.md` for existing pages on the same topics — merge into existing p
 ## Quality Checklist
 
 - [ ] 3 rounds completed (or halted at sufficient depth)
-- [ ] Synthesis page exists at `synthesis/Research: [Topic].md`
+- [ ] Synthesis page exists at `<synthesis folder>/Research: [Topic].md`
 - [ ] Source pages written for major references
 - [ ] Concept and entity pages written for significant items
 - [ ] Contradictions flagged in synthesis page

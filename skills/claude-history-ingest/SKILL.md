@@ -310,7 +310,7 @@ For each `audit.jsonl` found under `local-agent-mode-sessions/`, read it line by
 **What to extract from audit logs:**
 
 - **File access patterns** — which files does the agent repeatedly Read or Edit? These are the high-value files in the project. Note them as project references.
-- **Shell commands** — recurring Bash commands reveal the project's build/test/deploy workflow. Distill these into a `skills/` page (e.g. "how this project is built and tested").
+- **Shell commands** — recurring Bash commands reveal the project's build/test/deploy workflow. Distill these into a how-to page in the `procedure` folder (e.g. "how this project is built and tested").
 - **Tool call sequences** — if the agent always does Read → Edit → Bash in a particular order, that's a workflow pattern worth capturing.
 - **Error patterns** — failed tool calls (non-zero exit codes, error outputs) reveal pain points, known rough edges, or recurring bugs.
 - **MCP tool calls** — calls to MCP tools reveal which external services and APIs the project integrates with.
@@ -336,25 +336,31 @@ Don't create one wiki page per conversation. Instead:
 
 ## Step 5: Distill into Wiki Pages
 
-Each Claude project maps to a project directory in the vault. The project directory name from `~/.claude/projects/` encodes the original path — decode it to get a clean project name:
+Each Claude project maps to a project in the vault. The project directory name from `~/.claude/projects/` encodes the original path — decode it to get a clean project name:
 
 ```
 -Users/Documents/projects/my-Project   → myproject
 -Users/Documents/projects/Another-app  → anotherapp
 ```
 
+Read the vault's CATEGORIES table first (`AGENTS.md`, or `llm-wiki layout --json`). Pages go only in the folders it lists, and each kind of knowledge below goes to the folder holding its role — the paths shown are a standard vault's. A role no row claims falls to the catch-all row.
+
 ### Project-specific vs. global knowledge
 
-| What you found                     | Where it goes               | Example                                             |
-| ---------------------------------- | --------------------------- | --------------------------------------------------- |
-| Project architecture decisions     | `projects/<name>/concepts/` | `projects/my-project/concepts/main-architecture.md` |
-| Project-specific debugging         | `projects/<name>/skills/`   | `projects/my-project/skills/api-rate-limiting.md`   |
-| General concept the user learned   | `concepts/` (global)        | `concepts/react-server-components.md`               |
-| Recurring problem across projects  | `skills/` (global)          | `skills/debugging-hydration-errors.md`              |
-| A tool/service used                | `entities/` (global)        | `entities/vercel-functions.md`                      |
-| Patterns across many conversations | `synthesis/` (global)       | `synthesis/common-debugging-patterns.md`            |
+| What you found                     | Role        | Example (vault with a `projects/` folder)            |
+| ---------------------------------- | ----------- | ---------------------------------------------------- |
+| Project architecture decisions     | `concept`   | `projects/my-project/concepts/main-architecture.md`  |
+| Project-specific debugging         | `procedure` | `projects/my-project/concepts/api-rate-limiting.md`  |
+| General concept the user learned   | `concept`   | `concepts/react-server-components.md`                |
+| Recurring problem across projects  | `procedure` | `concepts/debugging-hydration-errors.md`             |
+| A tool/service used                | `entity`    | `entities/vercel-functions.md`                       |
+| Patterns across many conversations | `synthesis` | `synthesis/common-debugging-patterns.md`             |
 
-For each project with content, create or update the project overview page at `projects/<name>/<name>.md` — **named after the project, not `_project.md`**. Obsidian's graph view uses the filename as the node label, so `_project.md` makes every project show up as `_project` in the graph. Naming it `<name>.md` gives each project a distinct, readable node name.
+(A standard vault has no separate how-to folder, so `procedure` lands in `concepts/`; vaults that still have `skills/` use it.)
+
+**With a project folder** (a row with the `project` role, `projects/` by default): put project-specific pages under `projects/<name>/<folder>/`, and for each project with content, create or update the project overview page at `projects/<name>/<name>.md` — **named after the project, not `_project.md`**.
+
+**Without one**: don't create `projects/` (law 3). File project-specific pages in the global folders, add `project: <name>` to their frontmatter, and keep the project's summary in the manifest's `projects` section only. Obsidian's graph view uses the filename as the node label, so `_project.md` makes every project show up as `_project` in the graph. Naming it `<name>.md` gives each project a distinct, readable node name.
 
 **Important:** Distill the _knowledge_, not the conversation. Don't write "In a conversation on March 15, the user asked about X." Write the knowledge itself, with the conversation as a source attribution.
 
@@ -402,6 +408,8 @@ Also update the `projects` section of the manifest:
   }
 }
 ```
+
+In a vault without a project folder, set `vault_path` to `null`.
 
 ### Create journal entry + update special files
 
