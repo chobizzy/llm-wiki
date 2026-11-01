@@ -1,0 +1,2 @@
+# The vault backup hook is a sh script: CRLF breaks its shebang line.
+presets/backup/_meta/hooks/* text eol=lf
