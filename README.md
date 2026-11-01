@@ -7,7 +7,7 @@
 **Your notes, compiled.**
 
 A knowledge base your AI agents maintain under written law — not a chatbot, not a vector store.
-31 agent skills, a zero-dependency CLI, and a ready-to-copy Obsidian vault governed by a constitution.
+31 agent skills, a zero-dependency CLI, and an Obsidian vault in the layout you choose, governed by a constitution.
 
 [![MIT License][license-shield]][license-url]
 [![Python 3.10+][python-shield]][python-url]
@@ -37,7 +37,7 @@ A knowledge base your AI agents maintain under written law — not a chatbot, no
 2. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
    - [Installation](#installation)
-   - [Scaffold a new vault](#scaffold-a-new-vault)
+   - [Create a vault](#create-a-vault)
 3. [Usage](#usage)
    - [The loop](#the-loop)
    - [CLI reference](#cli-reference)
@@ -88,7 +88,7 @@ flowchart LR
     B -->|you read and curate| A
 ```
 
-Drop a paper in `_inbox/`, say *"ingest my inbox"*, and an agent distills it into the seven page
+Drop a paper in `_inbox/`, say *"ingest my inbox"*, and an agent distills it into your vault's page
 categories — merging into pages that already exist rather than piling up duplicates, marking what
 it inferred, updating the index and the op log, and committing. Re-ingesting an unchanged source
 is a no-op, because every source is content-hashed in `.manifest.json`.
@@ -118,7 +118,7 @@ communities, and connections you didn't know you'd made.
 
 ### Built With
 
-Deliberately boring. The CLI is ~2,900 lines of Python standard library with **zero runtime
+Deliberately boring. The CLI is ~4,400 lines of Python standard library with **zero runtime
 dependencies**, so it cannot break from a transitive upgrade, and the vault is plain markdown
 that outlives any of it.
 
@@ -156,20 +156,44 @@ llm-wiki setup --vault /path/to/your/vault
 
 `setup` links every folder in `skills/` into each detected agent directory
 (`~/.claude/skills/`, `~/.hermes/skills/`, …) and writes the global config to
-`~/.llm-wiki/config`. Use `--copy` instead of linking if you'd rather have snapshots.
+`~/.llm-wiki/config`. Use `--copy` instead of linking if you'd rather have snapshots. If the vault
+folder doesn't exist yet, `setup` offers to create it with the questions below.
 
 > [!IMPORTANT]
 > Keep the checkout where it is. If you move it, re-run `llm-wiki setup` to repoint the links.
 
-### Scaffold a new vault
-
-`vault-template/` is a complete vault skeleton: the constitution, the seven page categories
-seeded with demo pages, page templates, git hooks, and human-facing docs.
+### Create a vault
 
 ```bash
-cp -r ~/Projects/llm-wiki/vault-template ~/Documents/my-wiki
+llm-wiki init ~/Documents/my-wiki
+```
+
+In a terminal, `init` asks a few short questions — which pack, what you'll use the vault for, and
+two extras — shows the folder tree, and writes the vault when you confirm. Agents and scripts pass
+the answers as options instead, e.g. `llm-wiki init ~/Documents/my-wiki --role indie-hacker --role creator`.
+
+| Pack | Folders |
+|---|---|
+| **standard** (default) | `references/` `entities/` `synthesis/` `concepts/` — one folder per page type in Karpathy's gist |
+| **minimal** | `wiki/` — every page in one folder, as in the gist |
+
+On the standard pack, roles add the folder or two a kind of work needs, and combine freely:
+
+| Role | Adds | Role | Adds |
+|---|---|---|---|
+| `learner` | `courses/` | `creator` | `ideas/` `outputs/` |
+| `researcher` | `questions/` | `team` | `meetings/` `decisions/` |
+| `indie-hacker` | `projects/` | `personal` | `journal/` |
+
+Add folders of your own with `--folder name="what it holds"`. Each vault keeps its folders in a
+CATEGORIES table in its `AGENTS.md`; edit it any time, or ask an agent to. The
+[layouts guide](guide/layouts.md) has the details.
+
+Then make the vault a git repo and point your agents at it:
+
+```bash
 cd ~/Documents/my-wiki
-git init && git add -A && git commit -m "init: vault from template"
+git init && git add -A && git commit -m "init: vault from the llm-wiki standard pack"
 llm-wiki setup --vault .
 ```
 
@@ -180,9 +204,9 @@ llm-wiki doctor --vault .
 llm-wiki lint . --json
 ```
 
-A healthy new vault reports **zero fail-level findings and exactly one warning** —
-`duplicate_titles` for the seven files in `_meta/templates/`, which intentionally share the
-`{{title}}` placeholder.
+A new vault reports **zero fail-level findings**. A standard vault shows one warning —
+`duplicate_titles` for the files in `_meta/templates/`, which intentionally share the `{{title}}`
+placeholder; a minimal vault, with a single template, shows none.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -215,14 +239,17 @@ Nothing above needs an API key. The agent running the skills already has model a
 ### CLI reference
 
 The CLI handles the deterministic work — the things you want a machine to be sure about, not a
-model to estimate. Fourteen commands, no API keys.
+model to estimate. Seventeen commands, no API keys.
 
 | Command                                     | Purpose                                                       |
 | ------------------------------------------- | ------------------------------------------------------------- |
+| `llm-wiki init PATH [--pack] [--role …]`    | Create a vault: a pack, roles, folders of your own            |
+| `llm-wiki presets`                          | List the packs, roles, and add-on folders `init` can use      |
+| `llm-wiki layout [VAULT]`                   | Show the vault's folders and which one plays each role        |
 | `llm-wiki setup [--vault PATH] [--copy]`    | Link skills into your agents, write config                    |
 | `llm-wiki list` · `llm-wiki info`           | List bundled skills · show install paths and status           |
 | `llm-wiki doctor [--strict] [--json]`       | Health-check config, vault shape, and installed skills        |
-| `llm-wiki lint [VAULT]`                     | Frontmatter, broken links, duplicates, orphans                |
+| `llm-wiki lint [VAULT]`                     | Frontmatter, broken links, lifecycle and layout errors, duplicates, orphans |
 | `llm-wiki query "question"`                 | Answer from the configured vault                              |
 | `llm-wiki graph-query VAULT "question"`     | Answer from the wikilink index alone — no page reads          |
 | `llm-wiki graph-analyse VAULT`              | God nodes, communities, surprising connections                |
@@ -253,7 +280,8 @@ agents; a file in the repo does.
 
 1. **Never delete a wiki page.** Supersede it: set `lifecycle: archived` and `superseded_by:`.
 2. **Never modify anything inside `_inbox/`.** Layer-1 sources are immutable ground truth.
-3. **Never write pages outside the seven categories.** System folders hold only system data.
+3. **Never write pages outside the folders in the vault's CATEGORIES table.** System folders hold
+   only system data.
 4. **Never write a page without complete frontmatter.** Missing a field means it isn't done.
 5. **Never present a synthesized claim as extracted.** Mark it `^[inferred]` or `^[ambiguous]`.
 6. **Never create a page for a concept that already has one.** One concept, one page — merge.
@@ -304,7 +332,7 @@ passes. Staleness is never stored — it's computed: `(today − updated) > 90 d
 
 ## The Skills
 
-Thirty-two skills, each a plain `SKILL.md` your agent loads on demand. They live as real files in
+Thirty-one skills, each a plain `SKILL.md` your agent loads on demand. They live as real files in
 [`skills/`](skills/) — read them, fork them, rewrite them.
 
 | Group           | Skills                                                                                              |
@@ -327,7 +355,6 @@ required; everything else has a sensible default.
 | ------------------------ | ---------------------------------------------------------- |
 | `OBSIDIAN_VAULT_PATH`    | Where the wiki lives — **required**                        |
 | `OBSIDIAN_SOURCES_DIR`   | Where raw source documents live                            |
-| `OBSIDIAN_CATEGORIES`    | Comma-separated category list                              |
 | `OBSIDIAN_LINK_FORMAT`   | `wikilink` (default) or `markdown`                         |
 | `WIKI_STAGED_WRITES`     | Route agent writes to `_staging/` for review before merging |
 | `WIKI_SKIP_PROJECTS`     | Substrings excluding projects from history ingest          |
@@ -338,12 +365,16 @@ Skills resolve config in a fixed order: an inline `@name` override, then a walk 
 current directory looking for `.env`, then the global config. This is what makes per-project
 vaults, multi-vault setups, and one-off cross-vault requests all work without surprises.
 
-Full details in [`vault-template/docs/`](vault-template/docs/) —
-[architecture](vault-template/docs/architecture.md) ·
-[configuration](vault-template/docs/configuration.md) ·
-[multi-agent](vault-template/docs/multi-agent.md) ·
-[maintenance loops](vault-template/docs/maintenance-loops.md) ·
-[trust & provenance](vault-template/docs/trust-and-provenance.md).
+A vault's folders aren't configuration: they live in the CATEGORIES table of its `AGENTS.md`, so
+they travel with the vault in git.
+
+Full details in [`guide/`](guide/) —
+[architecture](guide/architecture.md) ·
+[layouts](guide/layouts.md) ·
+[configuration](guide/configuration.md) ·
+[multi-agent](guide/multi-agent.md) ·
+[maintenance loops](guide/maintenance-loops.md) ·
+[trust & provenance](guide/trust-and-provenance.md).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -352,6 +383,7 @@ Full details in [`vault-template/docs/`](vault-template/docs/) —
 - [x] Stdlib-only CLI with `doctor` / `lint` gate
 - [x] 31 skills, linked from the checkout rather than `site-packages`
 - [x] Vault template with an eleven-law constitution
+- [x] Vault layouts: two packs, combinable roles, and folders of your own
 - [x] Provenance markers, confidence scoring, and lifecycle states
 - [x] Wikilink graph analysis and index-only querying
 - [x] Trust ledger for per-skill gate outcomes

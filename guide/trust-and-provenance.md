@@ -1,14 +1,3 @@
----
-title: Trust and Provenance
-category: meta
-tags: [meta, agentic-systems]
-sources: [owner]
-summary: The trust model — lifecycle states with human-only promotion, confidence scores, provenance splits, and inline inference markers.
-lifecycle: draft
-created: 2026-07-12
-updated: 2026-07-12
----
-
 # Trust and Provenance
 
 Machine-written knowledge needs machine-readable honesty. Four signals, all visible in a page's frontmatter or body:
@@ -27,6 +16,6 @@ Machine-written knowledge needs machine-readable honesty. Four signals, all visi
 
 ## Inline markers (which sentence, exactly?)
 
-`^[inferred]` ends a sentence the model concluded on its own; `^[ambiguous]` ends a claim the sources disagree on. Unmarked sentences must paraphrase a real source (law 5). Contradictions are surfaced in [[hot]], never silently resolved — see [[why-agents-need-a-constitution]] for why this is load-bearing.
+`^[inferred]` ends a sentence the model concluded on its own; `^[ambiguous]` ends a claim the sources disagree on. Unmarked sentences must paraphrase a real source (law 5). Contradictions are surfaced in `hot.md`, never silently resolved: once more than one agent writes, the only defence against a vault that quietly repeats its own guesses is laws in a file plus a gate that checks them.
 
-*Back to: [[architecture]]*
+*Back to: [architecture](architecture.md)*
