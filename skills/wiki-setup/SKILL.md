@@ -1,181 +1,111 @@
 ---
 name: wiki-setup
 description: >
-  Initialize a new Obsidian wiki vault with the correct structure, special files, and configuration.
-  Use this skill when the user wants to set up a new wiki from scratch, initialize the vault structure,
-  create the .env file, or says things like "set up my wiki", "initialize obsidian", "create a new vault",
-  "get started with the wiki". Also use when the user needs to reconfigure their existing vault or
-  fix a broken setup.
+  Create a new llm-wiki vault by interviewing the user — which pack (standard or minimal), what they'll use it
+  for (learner, researcher, indie hacker, content creator, team, personal), and any folders of their own — or
+  change the folders of an existing vault. Use when the user says "set up my wiki", "create a new vault",
+  "initialize obsidian", "get started with the wiki", "which folders should my wiki have", "add a recipes
+  folder to my wiki", "change my vault's folders", or needs to reconfigure or repair a broken setup.
 ---
 
-# Obsidian Setup — Vault Initialization
+# Wiki Setup — Create a Vault, or Change Its Folders
 
-You are setting up a new Obsidian wiki vault (or repairing an existing one).
+Two modes:
 
-## Step 1: Create .env
+- **Create** — there is no vault yet: interview the user, then build it with `llm-wiki init`.
+- **Change folders** — the vault exists: add, rename, or remove a folder in its CATEGORIES table.
 
-If `.env` doesn't exist, create it from `.env.example`. Ask the user for:
+Never hand-build a vault with `mkdir`. `llm-wiki init` writes the constitution, the CATEGORIES table, the page templates, and the bookkeeping files, and every combination it can produce passes the gate. Folder names come only from the user's answers — never invent a layout.
 
-1. **Where should the vault live?** → `OBSIDIAN_VAULT_PATH`
-   - Default: `~/Documents/llm-wiki-vault`
-   - Must be an absolute path (after expansion)
+## Mode A: Create a vault
 
-2. **Where are your source documents?** → `OBSIDIAN_SOURCES_DIR`
-   - Can be multiple paths, comma-separated
-   - Default: `~/Documents`
+### Step 1: Where
 
-3. **Want to import Claude history?** → `CLAUDE_HISTORY_PATH`
-   - Default: auto-discovers from `~/.claude`
-   - Set explicitly if Claude data is elsewhere
+Ask where the vault should live: a new or empty folder (default `~/Documents/llm-wiki`). Expand it to an absolute path. If the folder exists and is not empty, stop — init never overwrites. If it already holds a vault (it has an `AGENTS.md`), switch to Mode B.
 
-4. **Have QMD installed?** → `QMD_WIKI_COLLECTION` / `QMD_PAPERS_COLLECTION` / `QMD_TRANSPORT`
-   - Optional. Enables semantic search in `wiki-query` and source discovery in `wiki-ingest`.
-   - Default to `QMD_TRANSPORT=mcp` unless the user wants the agent to call the local `qmd` CLI directly.
-   - If using CLI mode, set `QMD_CLI_SEARCH_MODE=quality` by default; suggest `balanced` if reranking is too slow.
-   - If unsure, skip for now — both skills fall back to `Grep` automatically.
-   - Install instructions: see `.env.example` (QMD section).
+### Step 2: Interview
 
-5. **Token budget warning threshold?** → `WIKI_TOKEN_WARN_THRESHOLD`
-   - Default: `100000` (warn when full-wiki read would cost > 100K tokens)
-   - Set to `0` to disable the warning entirely
-   - `wiki-status` shows a token footprint table and emits this warning automatically
+Get the current options with `llm-wiki presets --json` (packs, roles, add-on folders). Then ask these, in order, one at a time. Use your multiple-choice question tool if you have one; in Claude Code, show each pack's folder tree as the option preview.
 
-6. **Enable staged writes?** → `WIKI_STAGED_WRITES`
-   - Default: unset / `false` (pages written directly to their final location)
-   - Set to `true` for team wikis, high-stakes domains, or any vault where the human wants final say on every LLM-written page
-   - When enabled: all new/updated pages land in `_staging/` first; run `/wiki-stage-commit` to review and promote them
-   - `wiki-status` shows a "Staged writes pending" count when files are waiting
+1. **Which pack?**
+   - **standard** (default) — `references/ entities/ synthesis/ concepts/`: one folder per page type in Karpathy's LLM-wiki gist.
+   - **minimal** — a single `wiki/` folder, as in the gist. Pages keep their kind in `category:`.
+2. **What will you use it for?** Standard only. Pick any, or none — each role adds a folder or two:
 
-## Step 2: Create Vault Directory Structure
+   | Role | Adds |
+   |---|---|
+   | Learner — courses, books, self-study | `courses/` |
+   | Researcher — papers and reports, building a thesis | `questions/` |
+   | Indie hacker — building products on your own | `projects/` |
+   | Content creator — research for posts, videos, newsletters | `ideas/`, `outputs/` |
+   | Team — a shared wiki fed by meetings, chats and docs | `meetings/`, `decisions/` |
+   | Personal — goals, health, reflections | `journal/` |
 
-```bash
-mkdir -p "$OBSIDIAN_VAULT_PATH"/{concepts,entities,skills,references,synthesis,journal,projects,_archives,_raw,_staging,.obsidian}
-```
+   If the user answers in their own words ("I build SaaS and post on YouTube"), map it to roles yourself and confirm: *"That's indie hacker + content creator: adds projects/, ideas/ and outputs/. OK?"*
+3. **Any folder of your own?** Standard only, optional. A name and one line of what it holds, e.g. `recipes — cooking recipes: ingredients and steps`. Names use lowercase letters, digits and hyphens.
+4. **Extras:**
+   - Demo pages that show the conventions — default yes for a first vault.
+   - A git hook that pushes every commit to a GitHub remote — default no.
+   - Staged writes (agent edits wait in `_staging/` until the owner approves them) — default yes for the team role, otherwise no.
 
-- `.obsidian/` — Obsidian's own config. Creates vault recognition.
-- `projects/` — Per-project knowledge (populated during ingest).
-- `_archives/` — Stores wiki snapshots for rebuild/restore operations.
-- `_raw/` — Staging area for unprocessed drafts. Drop rough notes here; `wiki-ingest` will promote them to proper wiki pages and move the originals into `_raw/_archived/` (created on first use).
-- `_staging/` — Review queue for LLM-written pages when `WIKI_STAGED_WRITES=true`. Pages here are not visible in Obsidian's graph until promoted via `/wiki-stage-commit`.
+Keep the interview short. Structure is earned, not designed upfront, and the table is easy to change later. Don't offer renames unless the user asks for one.
 
-## Step 3: Create Special Files
+### Step 3: Preview, then confirm
 
-### index.md
+Run `llm-wiki init <path> <flags> --dry-run` and show the user the folder tree and CATEGORIES table it prints. The flags:
 
-```markdown
----
-title: Wiki Index
----
+| Answer | Flag |
+|---|---|
+| pack | `--pack standard` or `--pack minimal` |
+| each role | `--role learner` (repeat per role: `researcher`, `indie-hacker`, `creator`, `team`, `personal`) |
+| each folder of their own | `--folder recipes="Cooking recipes: ingredients and steps"` |
+| a rename the user asked for | `--rename concepts=notes` |
+| no demo pages | `--no-demo` |
+| backup hook | `--backup-hook` |
 
-# Wiki Index
+Create the vault only after the user says yes.
 
-*This index is automatically maintained. Last updated: TIMESTAMP*
+### Step 4: Create and connect
 
-## Concepts
+1. `llm-wiki init <path> <same flags>`.
+2. `llm-wiki setup --vault <path>` — links the skills into the user's agents and writes `~/.llm-wiki/config`.
+3. If the user chose staged writes, set `WIKI_STAGED_WRITES="true"` in `~/.llm-wiki/config` (flat `KEY="value"` lines; keep every other key).
+4. Offer to make the first commit inside the vault: `git init && git add -A && git commit -m "init: vault from the llm-wiki <pack> pack"`. Git is what makes every later operation undoable (law 9, DONE item 6), but ask first — it's the user's folder.
+5. If they chose the backup hook: tell them to add a private remote, then run `git config core.hooksPath _meta/hooks` in the vault.
+6. Verify: `llm-wiki doctor --vault <path>` passes, including `vault-layout`, and `llm-wiki lint <path> --json` has no fail-level findings. A fresh standard vault shows exactly one warning (`duplicate_titles` for the page templates, which share the `{{title}}` placeholder); a fresh minimal vault shows none.
 
-*No pages yet. Use `wiki-ingest` to add your first source.*
+Then tell the user what to do next: open the folder as a vault in Obsidian, drop a source in `_inbox/`, and say "ingest my inbox". If they picked the indie hacker role, suggest "process my Claude history" to mine their past sessions.
 
-## Entities
+Recommended Obsidian community plugins (the user installs them): **Dataview** (query page metadata), **Templater** (if they write pages by hand), **Obsidian Git** (backups from inside Obsidian).
 
-## Skills
+## Mode B: Change an existing vault's folders
 
-## References
+Resolve config (Config Resolution Protocol in `llm-wiki/SKILL.md`) and read the vault's `AGENTS.md`. Law 9 applies: if `git status` shows changes you didn't make, stop and report.
 
-## Synthesis
+**If `AGENTS.md` has no CATEGORIES table,** the vault uses the original seven folders. Add the table before changing anything, and show the user the diff first:
 
-## Journal
-```
+1. Insert a `## CATEGORIES` section after FOLDERS, copying the preamble from `$LLM_WIKI_REPO/presets/base/AGENTS.md`, with the table `llm-wiki layout <vault>` prints for the folders that exist: `| Folder | Holds | Role |`, one row per folder.
+2. Change law 3 to: "Never write wiki pages outside the folders in the CATEGORIES table below."
+3. Remove the category rows from the FOLDERS table and the old "Filing rule" line — the table replaces both.
 
-### log.md
+**To add a folder:**
 
-```markdown
----
-title: Wiki Log
----
+1. Add a row: the folder name (lowercase letters, digits, hyphens; never starting with `_` or `.`), what it holds, and a role only if it takes over a built-in part (rare — each role belongs to one folder). Put it above the general rows: rows are checked top-down, and the last row catches everything else.
+2. Create the folder with an empty `.gitkeep`.
+3. Add its page template to `_meta/templates/`. For a role's add-on folder, copy `$LLM_WIKI_REPO/presets/templates/<template>.md` (the add-on's template is named in `llm-wiki presets --json`, e.g. `meeting`, `course`). For a folder of the user's own, copy `presets/templates/page.md` and name it after the folder. Replace `__CATEGORY__` with the folder name and `__HOLDS__` with the row's Holds text.
+4. Add a `## <Folder>` section to `index.md`.
 
-# Wiki Log
+**To rename or remove a folder:** only while it is empty. If it holds pages, stop and explain: moving pages changes their paths and `category:`, plus any path-style links and `.manifest.json` entries that point at them. That is its own planned operation, not part of setup.
 
-- [TIMESTAMP] INIT vault_path="OBSIDIAN_VAULT_PATH" categories=concepts,entities,skills,references,synthesis,journal
-```
+**Then close it like any write operation** (DONE contract in `AGENTS.md`):
 
-### hot.md
+- `llm-wiki layout <vault>` shows the new table, `llm-wiki doctor --vault <vault>` passes, and `llm-wiki lint <vault> --json` has no fail-level findings.
+- Append to `log.md`: `- [ISO-8601Z] LAYOUT agent=<agent> added=<folder>` (or `renamed=<old>><new>`, `removed=<folder>`).
+- Note the change in `hot.md`, and commit: `wiki(layout): <summary>`.
 
-```markdown
----
-title: Hot Cache
-updated: TIMESTAMP
----
+## Optional: Other Settings
 
-# Hot Cache
-
-*A ~500-word semantic snapshot of recent activity. Updated after every major write operation.*
-
-## Recent Activity
-
-- [TIMESTAMP] INIT — vault created at OBSIDIAN_VAULT_PATH
-
-## Active Threads
-
-*None yet — start ingesting sources to populate.*
-
-## Key Takeaways
-
-*None yet.*
-
-## Flagged Contradictions
-
-*None yet.*
-```
-
-## Step 4: Create .obsidian Configuration
-
-Create minimal Obsidian config for a good out-of-box experience:
-
-### .obsidian/app.json
-```json
-{
-  "strictLineBreaks": false,
-  "showFrontmatter": false,
-  "defaultViewMode": "preview",
-  "livePreview": true
-}
-```
-
-### .obsidian/appearance.json
-```json
-{
-  "baseFontSize": 16
-}
-```
-
-## Step 5: Recommend Obsidian Plugins
-
-Tell the user about these recommended community plugins (they install manually):
-
-1. **Dataview** — Query page metadata, create dynamic tables. Essential for a wiki.
-2. **Graph Analysis** — Enhanced graph view for exploring connections.
-3. **Templater** — If they want to create pages manually using templates.
-4. **Obsidian Git** — Auto-backup the vault to a git repo.
-
-## Step 6: Verify Setup
-
-Run a quick sanity check:
-- [ ] Vault directory exists with: `concepts/`, `entities/`, `skills/`, `references/`, `synthesis/`, `journal/`, `projects/`, `_archives/`, `_raw/`
-- [ ] `index.md` exists at vault root
-- [ ] `log.md` exists at vault root
-- [ ] `hot.md` exists at vault root
-- [ ] `.env` has `OBSIDIAN_VAULT_PATH` set
-- [ ] `.obsidian/` directory exists
-- [ ] `_staging/` directory exists (required even when `WIKI_STAGED_WRITES` is not set — created on setup for future use)
-- [ ] Source directories (if configured) exist and are readable
-
-Report the results and tell the user they can now:
-1. Open the vault in Obsidian (File → Open Vault → select the directory)
-2. Run `wiki-status` to see what's available to ingest
-3. Run `wiki-ingest` to add their first sources
-4. Run `claude-history-ingest` to mine their Claude conversations
-5. Run `hermes-history-ingest` to mine their Hermes sessions (if they use Hermes)
-6. Run `wiki-status` again anytime to check the delta
+`llm-wiki setup` writes the essentials. Everything else is optional and documented under Environment Variables in `llm-wiki/SKILL.md`: `OBSIDIAN_SOURCES_DIR`, `CLAUDE_HISTORY_PATH`, `HERMES_HOME`, `OBSIDIAN_LINK_FORMAT`, `WIKI_TOKEN_WARN_THRESHOLD`, and the QMD variables. Ask about them only when the user brings them up.
 
 ## Optional: Install the Stop Hook (Auto-Capture)
 

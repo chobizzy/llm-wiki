@@ -66,17 +66,16 @@ Every color is wrapped as `{"a": 1, "rgb": <int>}`.
 
 ### Mode: `by-category`
 
-Use the seven vault top-level folders in this fixed order so colors are stable across runs:
+Use the vault's category folders — the rows of the CATEGORIES table in `AGENTS.md` (or `categories` from `llm-wiki layout --json`) — in table order, so colors are stable across runs: the first row gets palette index 0, the second index 1, and so on. A standard vault gets:
 
 | Folder | Color index |
 |---|---|
-| `concepts` | 0 (blue) |
+| `references` | 0 (blue) |
 | `entities` | 1 (orange) |
-| `skills` | 2 (red) |
-| `references` | 3 (teal) |
-| `synthesis` | 4 (green) |
-| `projects` | 5 (yellow) |
-| `journal` | 6 (purple) |
+| `synthesis` | 2 (red) |
+| `concepts` | 3 (teal) |
+
+Folders added by roles take the earlier indexes because they come first in the table. A vault without a CATEGORIES table uses the original seven folders, in the order `llm-wiki layout` prints. With more than 10 folders, cap at 10 and tell the user the rest share the "other" color.
 
 Emit one entry per folder that exists AND contains at least one `.md` file. Each entry is:
 

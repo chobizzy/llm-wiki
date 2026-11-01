@@ -79,7 +79,7 @@ Not every possible link is worth adding. Score each candidate using a composite 
 | **Shared tags (2+)** | +2 | Both tagged `#ai #agent` but no link between them |
 | **Same project, no link** | +2 | Both under `projects/my-project/` but don't reference each other |
 | **Mentioned entity/concept** | +2 | Page mentions "knowledge graphs" → link to `[[concepts/knowledge-graphs]]` |
-| **Cross-category connection** | +2 | Source is in `concepts/`, target is in `entities/` (or `skills/` ↔ `synthesis/`) — different knowledge layers make this link more architecturally valuable |
+| **Cross-category connection** | +2 | Source and target are in different category folders (e.g. `concepts/` → `entities/`, or `references/` ↔ `synthesis/`) — different knowledge layers make this link more architecturally valuable |
 | **Peripheral→hub reach** | +2 | Source page has ≤ 2 total links (peripheral) but target has ≥ 8 (hub) — connecting a loose page to a load-bearing concept |
 | **Partial name match** | +1 | "graph" appears but page is `knowledge-graphs` — plausible but ambiguous |
 
@@ -162,7 +162,7 @@ Only add entries for links added in this cross-linker run — do not touch typed
 
 ## Step 5: Score Misc Page Affinity
 
-After the main linking pass, update affinity scores for all pages in `misc/` (pages with `promotion_status: misc` in their frontmatter, or located under the `misc/` directory).
+After the main linking pass, update affinity scores for all misc pages: pages with `promotion_status: misc` in their frontmatter (URL ingests with no project home, kept in the reference folder), or — in older vaults — pages under a `misc/` directory.
 
 For each misc page:
 
@@ -204,13 +204,13 @@ Present a summary:
 - `concepts/bar.md` — could not find related pages
 
 ### Misc Promotion Candidates: N
-Pages in misc/ that have ≥ 3 connections to a single project — ready to be promoted:
+Misc pages that have ≥ 3 connections to a single project — ready to be promoted:
 
 | Page | Top Project | Score |
 |---|---|---|
-| `misc/web-martinfowler-articles-microservices.md` | `llm-wiki` | 4 |
+| `references/web-martinfowler-articles-microservices.md` | `llm-wiki` | 4 |
 
-To promote: move the page to `projects/<project-name>/references/` and update all backlinks.
+To promote: in a vault with a project folder, move the page to `projects/<project-name>/references/` and update all backlinks; without one, set `project: <project-name>` on the page and remove `promotion_status`.
 
 ### Pages Skipped: 3
 - `index.md`, `log.md` — special files

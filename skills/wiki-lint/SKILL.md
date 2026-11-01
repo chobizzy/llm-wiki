@@ -157,16 +157,17 @@ Checks that `visibility/` tags are applied correctly and aren't silently missing
 
 ### 10. Misc Promotion Candidates
 
-Find pages in `misc/` that have accumulated enough project affinity to be promoted.
+Find misc pages — URL ingests with no project home, marked `promotion_status: misc` — that have accumulated enough project affinity to be promoted.
 
 **How to check:**
-- Glob `$OBSIDIAN_VAULT_PATH/misc/*.md`
+- Grep the vault for `promotion_status: misc` in frontmatter (these live in the reference folder; older vaults may also have a `misc/` folder)
 - For each page, read the `affinity` frontmatter field
 - Flag pages where any single project's score ≥ 3
 
 **How to fix:**
 - Run the `cross-linker` skill first if affinity scores look stale (e.g., `affinity: {}` on a page with many wikilinks)
-- To promote: move the page to `projects/<project-name>/references/` (or another appropriate category), update its `category` frontmatter, remove `promotion_status`, and grep the vault for backlinks to update them
+- To promote, when the vault has a project folder: move the page to `projects/<project-name>/references/` (or another appropriate category), update its `category` frontmatter, remove `promotion_status`, and grep the vault for backlinks to update them
+- Without a project folder: leave the page where it is, set `project: <project-name>`, and remove `promotion_status`
 
 ### 12. Confidence and Lifecycle Schema
 
@@ -364,11 +365,11 @@ Append to `log.md`:
 - [TIMESTAMP] LINT issues_found=N orphans=X broken_links=Y stale=Z contradictions=W prov_issues=P missing_summary=S fragmented_clusters=F visibility_issues=V promotion_candidates=C synthesis_gaps=G relationship_issues=R
 ```
 
-If `_meta/trust-ledger.md` exists in the vault, also append the gate outcome:
+Also append the gate outcome to `_meta/trust-ledger.md` — if the file doesn't exist yet, create it first with the header in `llm-wiki/SKILL.md` (Trust Ledger):
 ```
 - [TIMESTAMP] skill=wiki-lint agent=<agent> gate=pass|fail notes="issues_found=N; fail-level outside _inbox/=M"
 ```
-`gate=pass` = zero fail-level findings (`broken_links`, `missing_frontmatter`) outside `_inbox/`. This ledger feeds the graduated-trust pass-rate review.
+`gate=pass` = zero fail-level findings (`broken_links`, `missing_frontmatter`, `invalid_lifecycle`, `invalid_layout`) outside `_inbox/`. This ledger feeds the graduated-trust pass-rate review.
 
 Offer to fix issues automatically or let the user decide which to address.
 
@@ -433,12 +434,12 @@ For each pair of pages marked as contradicting each other (via `relationships: c
 
 ### Action 7: Write consolidation report
 
-After all actions, write a report to `synthesis/consolidation-<YYYY-MM-DD>.md`:
+After all actions, write a report to `<synthesis folder>/consolidation-<YYYY-MM-DD>.md` — the folder with the `synthesis` role (`synthesis/` in a standard vault, the catch-all when no row claims it):
 
 ```markdown
 ---
 title: Consolidation Report <YYYY-MM-DD>
-category: synthesis
+category: synthesis   # the folder you wrote it to (in a single-folder vault: synthesis)
 tags: [maintenance, consolidation]
 sources: []
 summary: Auto-generated consolidation report from wiki-lint --consolidate run on <date>.
@@ -499,7 +500,7 @@ Apply these 6 changes? [yes / no / select by number]
 ### Log entry for consolidate mode
 
 ```
-- [TIMESTAMP] LINT_CONSOLIDATE links_fixed=N orphans_rescued=M lifecycle_updates=K tier_demotions=D tag_fixes=T contradiction_callouts=C report=synthesis/consolidation-YYYY-MM-DD.md
+- [TIMESTAMP] LINT_CONSOLIDATE links_fixed=N orphans_rescued=M lifecycle_updates=K tier_demotions=D tag_fixes=T contradiction_callouts=C report=<synthesis folder>/consolidation-YYYY-MM-DD.md
 ```
 
 ## QMD Refresh After Vault Writes

@@ -34,11 +34,12 @@ conversation into a page; the factory turns a body of pages into a reusable skil
    `LLM_WIKI_REPO`, `OBSIDIAN_LINK_FORMAT`, the QMD vars, and:
    - `SKILL_FACTORY_OUTPUT_DIR` — where generated skills land. Default:
      `$OBSIDIAN_VAULT_PATH/_generated-skills` (a vault-level, underscore-prefixed *excluded* dir —
-     like `_raw`/`_staging`/`_sources`, NOT the `skills/` knowledge category). This co-locates
+     like `_raw`/`_staging`/`_sources`, NOT a knowledge category). This co-locates
      generated skills with the vault they were distilled from. Create it if missing.
      Note: `_generated-skills/` holds runtime Agent-Skill bundles (`name` + `description` frontmatter),
-     **not** wiki pages — never write them into `skills/` (that category is for knowledge pages and
-     is graph-/lint-/index-tracked).
+     **not** wiki pages — never write them into a category folder from the vault's CATEGORIES table
+     (those hold knowledge pages and are graph-/lint-/index-tracked; older vaults have one named
+     `skills/`, which is knowledge too, not agent skills).
    - `SKILL_FACTORY_MATURITY` — comma list of `lifecycle:` values that count as "mature".
      Default: `reviewed,verified`. Pages with `tier: core` also qualify.
 2. Read `index.md` to understand what the vault holds.

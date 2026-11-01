@@ -22,7 +22,7 @@ You are answering questions against a compiled Obsidian wiki, not raw source doc
 `wiki-query` answers questions. It MUST NOT create or modify any wiki content. The ONLY write it may perform is the single Step 6 append to `log.md`.
 
 Never, even when a change seems obviously helpful:
-- create or edit pages under `concepts/`, `entities/`, `skills/`, `references/`, `synthesis/`, `journal/`, or `projects/`
+- create or edit pages in any category folder (the folders in the vault's CATEGORIES table — e.g. `references/`, `entities/`, `synthesis/`, `concepts/`)
 - modify `index.md`, `hot.md`, `_insights.md`, or `.manifest.json`
 
 If the user's message contains a new finding, an action request ("save this", "ban X", "record that"), or anything implying a change, **do not perform it.** Answer the question, PROPOSE the change, and route the user to the right skill:
@@ -187,7 +187,7 @@ Examples in a synthesized answer:
 
 Pages with no lifecycle field (legacy pages predating the schema) are treated the same as `draft` — annotate if stale, skip otherwise. Never fabricate a `lifecycle_reason`; if the field is absent, omit the reason from the annotation.
 
-**Surface the project source path (project-scoped queries).** When the cited pages are project-scoped — their path is under `projects/<name>/...`, or their frontmatter carries a `source_path` field — resolve where the actual code lives so a proposed fix can name real files and a follow-up turn can edit them:
+**Surface the project source path (project-scoped queries).** When the cited pages are project-scoped — their path is under `projects/<name>/...`, or their frontmatter carries a `project:` or `source_path` field — resolve where the actual code lives so a proposed fix can name real files and a follow-up turn can edit them:
 
 1. Read `$OBSIDIAN_VAULT_PATH/.manifest.json` and look up `.projects.<name>.source_cwd` — this is the authoritative path.
 2. Fallback: if the project isn't in the manifest, use the page's `source_path` frontmatter.

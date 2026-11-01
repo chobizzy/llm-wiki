@@ -25,7 +25,7 @@ If the user's invocation includes a project name — e.g. `/wiki-export prismor`
 
 1. **Extract the project name** from the argument or phrase. Normalise: lowercase, strip the word "project".
 2. Keep only pages where **either** condition holds:
-   - The page `id` starts with `projects/<name>/` (path-based match)
+   - The page `id` starts with `projects/<name>/` (path-based match), or its frontmatter has `project: <name>` (vaults without a project folder)
    - The page's `tags` array contains `<name>` (tag-based match)
 3. Drop any edge where either endpoint was excluded.
 4. Note the filter in the summary: `(filtered: project:<name> — X of Y pages)`
@@ -53,7 +53,7 @@ Glob all `.md` files in the vault (excluding `_archives/`, `_raw/`, `.obsidian/`
 For each page, extract from frontmatter:
 - `id` — relative path from vault root, without `.md` extension (e.g. `concepts/transformers`)
 - `label` — `title` field from frontmatter, or filename if missing
-- `category` — directory prefix (`concepts`, `entities`, `skills`, `references`, `synthesis`, `projects`, or `journal`)
+- `category` — directory prefix: one of the folders in the vault's CATEGORIES table (`references`, `entities`, `synthesis`, `concepts` in a standard vault). In a single-folder vault (`wiki/`), use the page's `category:` frontmatter instead, which names its kind
 - `tags` — array from frontmatter tags field
 - `summary` — frontmatter `summary` field if present
 
