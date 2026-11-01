@@ -3,20 +3,23 @@
 from __future__ import annotations
 
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from llm_wiki.layout import LEGACY_LAYOUT, LayoutError, load_layout
+
 SKIP_DIRS = frozenset("_raw _archived _staging _archives .obsidian".split())
 REQUIRED_FRONTMATTER = ("title", "category", "tags", "sources", "created", "updated")
-# Law 4's eighth field, required of wiki pages only. Law 3 puts wiki pages in
-# these folders and nowhere else, so everything outside them -- root files like
+# Law 4's eighth field, `lifecycle`, is required of wiki pages only. Law 3 puts
+# wiki pages in the folders of the vault's CATEGORIES table and nowhere else
+# (see llm_wiki.layout), so everything outside them -- root files like
 # index/log/hot and the constitution, plus _meta/ system data -- is bookkeeping
 # rather than knowledge. A lifecycle on those would assert a trust state that
 # does not apply: "draft" on AGENTS.md would read as "no human checked this".
-CONTENT_DIRS = frozenset("concepts entities skills references synthesis journal projects".split())
 RESERVED_PAGE_STEMS = frozenset({"index", "log", "hot", "_insights"})
 VALID_LIFECYCLE = ("draft", "reviewed", "verified", "disputed", "archived")
+FAIL_FINDINGS = ("broken_links", "missing_frontmatter", "invalid_lifecycle", "invalid_layout")
 
 _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 _FIELD_RE = re.compile(r"^([A-Za-z_][\w-]*):", re.MULTILINE)
@@ -64,7 +67,7 @@ def _parse_frontmatter_values(frontmatter: str) -> dict[str, str]:
     return values
 
 
-def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
+def _parse_page(path: Path, vault: Path, content_dirs: frozenset[str]) -> dict[str, Any]:
     relative = path.relative_to(vault)
     text = path.read_text(encoding="utf-8", errors="replace")
     front_match = _FRONTMATTER_RE.match(text)
@@ -85,7 +88,7 @@ def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
     return {
         "path": str(relative),
         "slug": _slug(path.stem),
-        "is_wiki_page": len(relative.parts) > 1 and relative.parts[0] in CONTENT_DIRS,
+        "is_wiki_page": len(relative.parts) > 1 and relative.parts[0] in content_dirs,
         "title": values.get("title", "").strip() or path.stem,
         "summary": values.get("summary", "").strip(),
         "lifecycle": values.get("lifecycle", "").strip(),
@@ -95,7 +98,15 @@ def _parse_page(path: Path, vault: Path) -> dict[str, Any]:
 
 
 def lint_vault(vault: Path) -> dict[str, Any]:
-    pages = [_parse_page(path, vault) for path in _iter_pages(vault)]
+    # A broken CATEGORIES table fails the gate on its own; the remaining checks
+    # still run against the original layout so one typo doesn't hide the rest.
+    try:
+        layout = load_layout(vault)
+        layout_problems: list[str] = []
+    except LayoutError as exc:
+        layout = LEGACY_LAYOUT
+        layout_problems = exc.problems
+    pages = [_parse_page(path, vault, layout.folders) for path in _iter_pages(vault)]
     by_slug = {page["slug"]: page for page in pages}
     incoming: dict[str, int] = defaultdict(int)
 
@@ -133,7 +144,7 @@ def lint_vault(vault: Path) -> dict[str, Any]:
     ]
 
     # Absence is not flagged here -- missing_frontmatter owns that, and only for
-    # wiki pages (see CONTENT_DIRS). This check only rejects values that are not
+    # wiki pages (see the layout). This check only rejects values that are not
     # states in the machine at all, wherever they appear.
     invalid_lifecycle = [
         {"page": page["path"], "value": page["lifecycle"]}
@@ -153,13 +164,14 @@ def lint_vault(vault: Path) -> dict[str, Any]:
         "broken_links": broken_links,
         "missing_frontmatter": missing_frontmatter,
         "invalid_lifecycle": invalid_lifecycle,
+        "invalid_layout": [{"page": "AGENTS.md", "problem": problem} for problem in layout_problems],
         "duplicate_titles": duplicate_titles,
         "missing_summaries": sorted(missing_summaries),
         "orphan_pages": sorted(orphan_pages),
     }
     counts = {name: len(items) for name, items in findings.items()}
 
-    if counts["broken_links"] or counts["missing_frontmatter"] or counts["invalid_lifecycle"]:
+    if any(counts[name] for name in FAIL_FINDINGS):
         status = "fail"
     elif any(counts[name] for name in ("duplicate_titles", "missing_summaries", "orphan_pages")):
         status = "warn"
@@ -168,6 +180,10 @@ def lint_vault(vault: Path) -> dict[str, Any]:
 
     return {
         "status": status,
+        "layout": {
+            "source": "invalid" if layout_problems else layout.source,
+            "folders": [category.folder for category in layout.categories],
+        },
         "stats": {
             "pages": len(pages),
             "link_count": sum(len(page["links"]) for page in pages),

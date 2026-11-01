@@ -11,7 +11,60 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from llm_wiki.cli import _check_git_tree, _check_required_files, _extra_required_files
+from llm_wiki.cli import _check_git_tree, _check_layout, _check_required_files, _extra_required_files
+
+CATEGORIES = """# AGENTS.md
+
+## CATEGORIES
+
+| Folder | Holds | Role |
+|---|---|---|
+| `references/` | One page per source | reference |
+| `wiki/` | Everything else | concept |
+"""
+
+
+class CheckLayoutTests(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.vault = Path(self._tmp.name)
+        self.addCleanup(self._tmp.cleanup)
+
+    def _agents(self, text: str) -> None:
+        (self.vault / "AGENTS.md").write_text(text, encoding="utf-8")
+
+    def test_vault_without_table_passes_on_the_original_layout(self):
+        check = _check_layout(self.vault)
+        self.assertEqual(check["name"], "vault-layout")
+        self.assertEqual(check["status"], "pass")
+        self.assertIn("original layout", check["detail"])
+
+    def test_original_layout_does_not_require_its_folders(self):
+        # Vaults made before the table often lack a few of the seven folders.
+        self._agents("# AGENTS.md\n\nNo table here.\n")
+        self.assertEqual(_check_layout(self.vault)["status"], "pass")
+
+    def test_passes_when_every_declared_folder_exists(self):
+        self._agents(CATEGORIES)
+        (self.vault / "references").mkdir()
+        (self.vault / "wiki").mkdir()
+        check = _check_layout(self.vault)
+        self.assertEqual(check["status"], "pass")
+        self.assertIn("references/, wiki/", check["detail"])
+
+    def test_warns_and_names_missing_folders(self):
+        self._agents(CATEGORIES)
+        (self.vault / "wiki").mkdir()
+        check = _check_layout(self.vault)
+        self.assertEqual(check["status"], "warn")
+        self.assertIn("references/", check["detail"])
+        self.assertNotIn("wiki/", check["detail"])
+
+    def test_fails_on_a_broken_table(self):
+        self._agents("# AGENTS.md\n\n## CATEGORIES\n\nNothing yet.\n")
+        check = _check_layout(self.vault)
+        self.assertEqual(check["status"], "fail")
+        self.assertIn("has no table", check["detail"])
 
 
 class ExtraRequiredFilesTests(unittest.TestCase):

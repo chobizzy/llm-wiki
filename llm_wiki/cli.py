@@ -333,6 +333,47 @@ def _check_required_files(vault: Path, required: list[str]) -> dict[str, str] | 
     }
 
 
+def _check_layout(vault: Path) -> dict[str, str]:
+    """The CATEGORIES table in AGENTS.md parses, and its folders exist.
+
+    A vault without the table keeps the original layout; its folders are not
+    checked, because vaults made before the table often lack a few of them.
+    """
+    from llm_wiki.layout import LayoutError, load_layout
+
+    try:
+        layout = load_layout(vault)
+    except LayoutError as exc:
+        return {
+            "name": "vault-layout",
+            "status": "fail",
+            "detail": "CATEGORIES table in AGENTS.md is invalid: " + "; ".join(exc.problems),
+            "hint": "fix the table: one row per folder, with Folder, Holds and Role columns",
+        }
+    folders = ", ".join(f"{category.folder}/" for category in layout.categories)
+    if layout.source != "AGENTS.md":
+        return {
+            "name": "vault-layout",
+            "status": "pass",
+            "detail": f"no CATEGORIES table in AGENTS.md; using the original layout ({folders})",
+            "hint": "",
+        }
+    missing = [category.folder for category in layout.categories if not (vault / category.folder).is_dir()]
+    if missing:
+        return {
+            "name": "vault-layout",
+            "status": "warn",
+            "detail": "category folder(s) missing: " + ", ".join(f"{name}/" for name in missing),
+            "hint": "create them, or remove their rows from the CATEGORIES table in AGENTS.md",
+        }
+    return {
+        "name": "vault-layout",
+        "status": "pass",
+        "detail": f"{len(layout.categories)} categories from AGENTS.md: {folders}",
+        "hint": "",
+    }
+
+
 def _check_git_tree(vault: Path) -> dict[str, str] | None:
     """Tripwire for uncommitted changes in a git-backed vault.
 
@@ -465,6 +506,8 @@ def run_doctor(*, vault_override: str | None = None) -> dict[str, object]:
                 )
             else:
                 _doctor_add(checks, name="vault-core-files", status="pass", detail="core vault files present", hint="")
+
+            checks.append(_check_layout(vault))
 
             manifest_path = vault / ".manifest.json"
             if manifest_path.exists():
@@ -733,6 +776,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def _print_lint(report: dict[str, object]) -> None:
     print(f"llm-wiki lint: {report['status']}")
+    layout = report["layout"]
+    print(f"layout: {layout['source']} ({', '.join(f'{name}/' for name in layout['folders'])})")
     stats = report["stats"]
     print(f"pages: {stats['pages']}  links: {stats['link_count']}")
     for name, count in stats["findings"].items():
@@ -742,14 +787,8 @@ def _print_lint(report: dict[str, object]) -> None:
 def cmd_lint(args: argparse.Namespace) -> int:
     from llm_wiki.lint import lint_vault
 
-    vault_arg = args.vault or _read_config_value("OBSIDIAN_VAULT_PATH")
-    if not vault_arg:
-        print("error: vault not configured; pass a path or run llm-wiki setup", file=sys.stderr)
-        return 1
-
-    vault = Path(vault_arg).expanduser().resolve()
-    if not vault.is_dir():
-        print(f"error: vault not found: {vault}", file=sys.stderr)
+    vault = _resolve_vault_arg(args.vault)
+    if vault is None:
         return 1
 
     report = lint_vault(vault)
@@ -762,6 +801,48 @@ def cmd_lint(args: argparse.Namespace) -> int:
         _print_lint(report)
     if report["status"] == "fail" or (args.strict and report["status"] == "warn"):
         return 1
+    return 0
+
+
+def _resolve_vault_arg(vault_arg: str | None) -> Path | None:
+    """The vault from an explicit argument or the global config, if it exists."""
+    vault_arg = vault_arg or _read_config_value("OBSIDIAN_VAULT_PATH")
+    if not vault_arg:
+        print("error: vault not configured; pass a path or run llm-wiki setup", file=sys.stderr)
+        return None
+    vault = Path(vault_arg).expanduser().resolve()
+    if not vault.is_dir():
+        print(f"error: vault not found: {vault}", file=sys.stderr)
+        return None
+    return vault
+
+
+def cmd_layout(args: argparse.Namespace) -> int:
+    from llm_wiki.layout import LayoutError, load_layout
+
+    vault = _resolve_vault_arg(args.vault)
+    if vault is None:
+        return 1
+    try:
+        layout = load_layout(vault)
+    except LayoutError as exc:
+        print("error: the CATEGORIES table in AGENTS.md is invalid:", file=sys.stderr)
+        for problem in exc.problems:
+            print(f"  - {problem}", file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(layout.to_dict(), indent=2 if args.pretty else None))
+        return 0
+
+    source = "CATEGORIES table in AGENTS.md" if layout.source == "AGENTS.md" else "original layout (no CATEGORIES table)"
+    print(f"layout: {source}")
+    width = max(len(category.folder) for category in layout.categories) + 1
+    for category in layout.categories:
+        role = category.role or "-"
+        print(f"  {category.folder + '/':<{width + 1}} {role:<10} {category.holds}")
+    print(f"catch-all: {layout.catch_all.folder}/")
+    print("roles: " + "  ".join(f"{role}→{folder}/" for role, folder in layout.roles().items()))
     return 0
 
 
@@ -967,6 +1048,15 @@ def build_parser() -> argparse.ArgumentParser:
     lt.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
     lt.add_argument("--strict", action="store_true", help="exit non-zero on warnings as well as failures")
     lt.set_defaults(func=cmd_lint)
+
+    ly = sub.add_parser(
+        "layout",
+        help="show the vault's page folders (CATEGORIES table in AGENTS.md) and which folder plays each role",
+    )
+    ly.add_argument("vault", nargs="?", help="path to the vault (defaults to configured OBSIDIAN_VAULT_PATH)")
+    ly.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ly.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    ly.set_defaults(func=cmd_layout)
 
     qq = sub.add_parser(
         "query",
