@@ -1,0 +1,35 @@
+/* Paper and highlighter. See DESIGN.md for the reasoning behind each value. */
+:root {
+  --c-bg: #f2f2ee;          /* ground: cool paper */
+  --c-fg: #121316;          /* ink */
+  --c-muted: #585b63;       /* 6.1:1 on ground */
+  --c-line: rgb(18 19 22 / 0.14);
+  --c-line-strong: rgb(18 19 22 / 0.42); /* control borders need 3:1 */
+  --c-accent: #ffd83d;      /* highlighter: a band behind ink or a node fill, never text */
+  --c-curtain: var(--c-bg);
+
+  --f-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  --f-body: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --t-mega: clamp(3.4rem, 1rem + 10.4vw, 12.5rem);
+  --t-xl: clamp(2.5rem, 1.2rem + 5vw, 6.5rem);
+  --t-l: clamp(1.6rem, 1.15rem + 1.9vw, 2.9rem);
+  --t-m: clamp(1.2rem, 1.05rem + 0.6vw, 1.6rem);
+  --t-body: clamp(1rem, 0.96rem + 0.18vw, 1.0625rem);
+  --t-s: 0.875rem;
+  --t-xs: 0.8125rem;
+
+  --u: clamp(0.5rem, 0.35rem + 0.6vw, 1rem);
+  --gutter: clamp(1rem, 0.6rem + 1.6vw, 2.5rem);
+  --maxw: 1520px;
+  --radius: 0px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.215, 0.61, 0.355, 1);
+
+  --z-content: 1;
+  --z-header: 50;
+  --z-curtain: 90;
+  --z-graph: 95;
+}

@@ -1,0 +1,34 @@
+---
+// The site's own link index: one node per page, one edge per link written between pages.
+// Positions come from a seeded layout at build time (src/lib/vault.ts).
+import { nodes, edges, nodeOf, lint } from '../lib/vault';
+
+interface Props {
+  current?: string;      // node lit as "you are here"
+  labels?: boolean;      // show every label (large copies)
+  live?: boolean;        // the persistent copy that motion drives
+}
+const { current, labels = false, live = false } = Astro.props;
+---
+<svg class:list={['lg', { 'lg--labels': labels }]} viewBox="0 0 100 100" role="group"
+  aria-label={`Link index of this site: ${lint.pages} pages joined by ${lint.links} links`}>
+  <g class="lg__edges" aria-hidden="true">
+    {edges.map(([a, b]) => {
+      const A = nodeOf(a), B = nodeOf(b);
+      return <line class="lg__edge" data-a={a} data-b={b} x1={A.x} y1={A.y} x2={B.x} y2={B.y} />;
+    })}
+    {live && <line class="lg__probe" x1="0" y1="0" x2="0" y2="0" opacity="0" />}
+  </g>
+  {nodes.map((n) => {
+    return (
+      <g class:list={['lg__node', { 'is-current': n.id === current }]} data-id={n.id} data-x={n.x} data-y={n.y} data-lx={n.lx} data-ly={n.ly}>
+        <a href={n.href} aria-current={n.id === current ? 'page' : undefined} aria-label={n.title}>
+          <circle class="lg__hit" cx={n.x} cy={n.y} r="6" />
+          <circle class="lg__dot" cx={n.x} cy={n.y} r={n.r} />
+          <text x={n.x + n.lx} y={n.y + n.ly} text-anchor={n.anchor} aria-hidden="true">{n.label}</text>
+        </a>
+      </g>
+    );
+  })}
+  {live && <circle class="lg__spark" r="1.6" cx="0" cy="0" aria-hidden="true" />}
+</svg>

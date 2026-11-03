@@ -72,8 +72,8 @@ actually completed — instead of asking the model to grade its own homework.
 
 > **Laws, not tips.** Every rule has a number, a *never*, or a check.
 
-The [project site][site-url] covers the same ground with illustrations and a link graph drawn from a
-real vault.
+The [project site][site-url] covers the same ground, renders the [guide](guide/) and the laws, and
+draws a link graph from a real vault. Its source is in [`site/`](site/).
 
 ### How it works
 
@@ -412,6 +412,10 @@ Two house rules, both enforced by the gate:
 - **New or changed skills must keep `llm-wiki doctor` and `llm-wiki lint --json` green.**
 - **Skills are prose, not code.** A skill is a `SKILL.md` that tells an agent how to behave.
   Write it as law — numbered, with a *never* or a check — not as suggestions.
+
+The project site lives in `site/` (Astro). `cd site && npm install && npm run build` writes it into
+`docs/`, which GitHub Pages serves; commit both. It reads `guide/`, `skills/` and
+`presets/base/AGENTS.md` at build time, so edit those, not the site, to change what it says.
 
 Have an idea but no time to build it? [Open an issue][issues-url] with the `enhancement` label,
 or just star the repo. Thanks!

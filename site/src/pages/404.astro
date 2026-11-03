@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import Frontmatter from '../components/Frontmatter.astro';
+import Wl from '../components/Wl.astro';
+import { BASE, hrefOf } from '../lib/vault';
+---
+<Base page="404" title="Page not found" description="There is no page at this address on the llm-wiki site. Pages in a vault are never deleted, so this one never existed.">
+  <section class="nf grid" aria-labelledby="nf-title">
+    <Frontmatter rows={[
+      ['title', 'not found'],
+      ['lifecycle', 'archived'],
+      ['superseded_by', '[[llm-wiki]]'],
+      ['status', '404'],
+    ]} />
+    <h1 class="nf__title" id="nf-title" data-split="lines" data-intro>A broken link</h1>
+    <p data-reveal="up" data-intro data-delay="0.2">Nobody deleted this page: law 1 forbids it. It never existed, and <code>lint</code> would have caught the link that brought you here.</p>
+    <p data-reveal="up" data-intro data-delay="0.3"><Wl href={BASE} open>Back to the start</Wl> or <Wl href={hrefOf('architecture')} open>read the guide</Wl></p>
+  </section>
+</Base>

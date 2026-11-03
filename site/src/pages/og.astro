@@ -1,0 +1,34 @@
+---
+// The 1200x630 social card, composed rather than cropped. Captured into public/og.png with
+// the awwwards og script; not linked, not in the sitemap, not indexed.
+import LinkIndex from '../components/LinkIndex.astro';
+import Frontmatter from '../components/Frontmatter.astro';
+import { BASE, lint } from '../lib/vault';
+import '../styles/tokens.css';
+import '../styles/base.css';
+const fontCss = `@font-face { font-family: 'Archivo'; src: url('${BASE}fonts/archivo.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; }
+@font-face { font-family: 'JetBrains Mono'; src: url('${BASE}fonts/jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; }`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>llm-wiki social card</title>
+    <style is:inline set:html={fontCss}></style>
+  </head>
+  <body>
+    <main class="og">
+      <Frontmatter rows={[['title', 'llm-wiki'], ['links', `${lint.pages} pages, ${lint.links} links, 0 broken`]]} />
+      <h1>Your notes,<br />compiled.</h1>
+      <p>A knowledge base your AI agents maintain under written law.</p>
+      <div class="og__graph li-inline"><LinkIndex current="home" labels /></div>
+    </main>
+    <style>
+      .og { width: 1200px; height: 630px; position: relative; padding: 56px 64px; display: grid; align-content: space-between; overflow: hidden; }
+      h1 { font-size: 128px; font-weight: 780; font-stretch: 112%; letter-spacing: -0.05em; line-height: 0.86; margin-left: -6px; }
+      p { font-size: 26px; letter-spacing: -0.01em; max-width: 24ch; }
+      .og__graph { position: absolute; right: 24px; top: 48px; width: 430px; }
+    </style>
+  </body>
+</html>
