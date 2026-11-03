@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://chobizzy.github.io/llm-wiki/sitemap-index.xml

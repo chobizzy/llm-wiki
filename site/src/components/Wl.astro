@@ -1,0 +1,7 @@
+---
+// A link set as a wikilink: the brackets close on hover, focus and for the current page.
+interface Props { href: string; current?: boolean; open?: boolean; class?: string; external?: boolean }
+const { href, current, open, class: cls, external } = Astro.props;
+---
+<a class:list={['wl', { 'wl--open': open }, cls]} href={href} aria-current={current ? 'page' : undefined}
+  rel={external ? 'noopener' : undefined}><span class="wl__b" aria-hidden="true">[[</span><span class="wl__t"><slot /></span><span class="wl__b" aria-hidden="true">]]</span></a>

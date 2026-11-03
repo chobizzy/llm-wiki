@@ -1,0 +1,18 @@
+---
+// A page's facts set as YAML frontmatter, the way every page in a vault starts.
+interface Props { rows: [string, string][]; class?: string }
+const { rows, class: cls } = Astro.props;
+---
+<div class:list={['fm mono', cls]}>
+  <span class="fm__fence" aria-hidden="true">---</span>
+  <dl class="fm__list">
+    {rows.map(([k, v]) => (
+      <div class="fm__row"><dt class="fm__k">{k}:</dt><dd class="fm__v">{v}</dd></div>
+    ))}
+  </dl>
+  <span class="fm__fence" aria-hidden="true">---</span>
+</div>
+<style>
+  .fm__list { display: grid; gap: 0.1em; }
+  .fm__row dd { margin: 0; }
+</style>

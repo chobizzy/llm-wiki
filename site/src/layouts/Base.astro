@@ -1,0 +1,117 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { site } from '../data/site';
+import { BASE, lint, guideOrder, hrefOf } from '../lib/vault';
+import LinkIndex from '../components/LinkIndex.astro';
+import Wl from '../components/Wl.astro';
+import '../styles/tokens.css';
+import '../styles/base.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  page: string; // node id in the link index, or '404'
+}
+const { title, description = site.description, page } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.tagline.replace(/\.$/, '')}`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL(`${BASE}og.png`, Astro.site).href;
+const isGuide = guideOrder.includes(page);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareSourceCode',
+  name: site.name,
+  description: site.description,
+  url: site.url,
+  codeRepository: site.repo,
+  programmingLanguage: 'Python',
+  license: 'https://opensource.org/licenses/MIT',
+};
+const fontCss = `
+@font-face { font-family: 'Archivo'; src: url('${BASE}fonts/archivo.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('${BASE}fonts/jetbrains-mono.woff2') format('woff2'); font-weight: 400 500; font-style: normal; font-display: swap; }`;
+---
+<!doctype html>
+<html lang="en" transition:animate="none" data-page={page}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#f2f2ee" />
+    <link rel="icon" href={`${BASE}favicon.svg`} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={`${BASE}apple-touch-icon.png`} />
+    <link rel="sitemap" href={`${BASE}sitemap-index.xml`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <link rel="preload" href={`${BASE}fonts/archivo.woff2`} as="font" type="font/woff2" crossorigin />
+    <style is:inline set:html={fontCss}></style>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
+    </script>
+    <ClientRouter fallback="swap" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div id="curtain" transition:persist="curtain" aria-hidden="true">
+      <div class="curtain__panel"><div class="curtain__title"><span class="wl__b">[[</span><span data-curtain-title></span><span class="wl__b">]]</span></div></div>
+    </div>
+    <header class="site-header grid">
+      <a class="brand wl" href={BASE} aria-current={page === 'home' ? 'page' : undefined}><span class="wl__b" aria-hidden="true">[[</span><span class="wl__t">llm-wiki</span><span class="wl__b" aria-hidden="true">]]</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><Wl href={hrefOf('architecture')} current={isGuide}>Guide</Wl></li>
+          <li><Wl href={hrefOf('laws')} current={page === 'laws'}>Laws</Wl></li>
+          <li><Wl href={site.repo} external>GitHub</Wl></li>
+        </ul>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="site-footer grid">
+      <p class="foot__big">Your agents already have model access. Give them a constitution.</p>
+      <div class="foot__lint">
+        <p class="mono muted">This site, checked like a vault when it was built:</p>
+        <pre>pages         {lint.pages}
+links         {lint.links}
+broken_links  <span class="ok">{lint.broken}</span>
+orphans       <span class="ok">{lint.orphans}</span></pre>
+      </div>
+      <ul class="foot__links">
+        <li><a class="ul" href={site.repo}>Repository on GitHub</a></li>
+        <li><a class="ul" href={`${site.repo}#readme`}>README</a></li>
+        <li><a class="ul" href={`${site.repo}/issues`}>Report a bug or request a feature</a></li>
+        <li><a class="ul" href={`${site.repo}/blob/main/LICENSE`}>MIT license</a></li>
+      </ul>
+      <p class="foot__small">
+        <span>Set in Archivo and JetBrains Mono.</span>
+        <span>The link index is computed from this site’s own links at build time.</span>
+      </p>
+    </footer>
+    <nav id="graph" transition:persist="graph" aria-label="Link index" data-graph>
+      <div class="lg-frame">
+        <p class="lg-cap mono"><span>link index</span><span>{lint.pages} pages, {lint.links} links</span></p>
+        <LinkIndex live current={page} />
+      </div>
+    </nav>
+    <script>
+      import { start } from '../engine/astro';
+      import { setupMotion } from '../motion/setup';
+      start(setupMotion);
+    </script>
+  </body>
+</html>

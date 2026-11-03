@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro';
+import Frontmatter from '../components/Frontmatter.astro';
+import LinkIndex from '../components/LinkIndex.astro';
+import { laws, lawParts, lawLinks, inline, hrefOf, nodeOf, done } from '../lib/vault';
+---
+<Base page="laws" title="The laws" description="The eleven laws in every llm-wiki vault's AGENTS.md: what agents may never do, and the six checks that decide when an operation is done.">
+  <header class="doc-head grid">
+    <Frontmatter rows={[
+      ['title', 'The laws'],
+      ['category', 'constitution'],
+      ['sources', 'presets/base/AGENTS.md'],
+      ['count', `${laws.length} laws, ${done.length} done checks`],
+    ]} />
+    <h1 class="doc-title" data-split="lines" data-intro>Laws, not tips</h1>
+    <p class="statement laws-intro">Every vault ships with a constitution in <code>AGENTS.md</code> that every agent reads before it writes. Each rule has a number, a <em>never</em>, or a check. These are copied from it at build time.</p>
+  </header>
+  <div class="grid">
+    <ol class="laws">
+      {laws.map((l) => {
+        const { head, rest } = lawParts(l.md);
+        const more = lawLinks[l.n];
+        return (
+          <li data-reveal="up">
+            <span class="laws__n" aria-hidden="true">{String(l.n).padStart(2, '0')}</span>
+            <div>
+              <p class="laws__head"><span class="sr-only">Law {l.n}. </span><Fragment set:html={inline(head)} /></p>
+              {rest && <p class="laws__rest" set:html={inline(rest)} />}
+              {more && <p class="laws__more">Why: <a class="il" href={hrefOf(more)}>{nodeOf(more).title}</a></p>}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+    <section class="sec grid laws-done" aria-labelledby="done-h">
+      <h2 class="sec-title" id="done-h"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Done, in six checks</span></h2>
+      <ol class="done">
+        {done.map((d) => (
+          <li><span class="done__box" aria-hidden="true">{String(d.n).padStart(2, '0')}</span><span class="done__text done__text--plain" set:html={inline(d.md)} /></li>
+        ))}
+      </ol>
+    </section>
+    <div class="li-foot">
+      <p class="mono muted">where this page sits</p>
+      <div class="li-inline"><LinkIndex current="laws" labels /></div>
+    </div>
+  </div>
+</Base>

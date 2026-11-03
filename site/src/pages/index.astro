@@ -1,0 +1,136 @@
+---
+import Base from '../layouts/Base.astro';
+import LinkIndex from '../components/LinkIndex.astro';
+import Frontmatter from '../components/Frontmatter.astro';
+import Wl from '../components/Wl.astro';
+import { site, home, skillGroups } from '../data/site';
+import { done, inline, specimen, skillCount, vaultSvg, vaultCounts, hrefOf, laws, lint, guideOrder, nodeOf, guideSummary } from '../lib/vault';
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// Mark the four things the notes beside the specimen explain.
+const specimenHtml = esc(specimen)
+  .replace(/^(lifecycle: draft)$/m, '<mark>$1</mark>')
+  .replace(/^(provenance: .+)$/m, '<mark>$1</mark>')
+  .replace(/\^\[inferred\]/g, '<mark>^[inferred]</mark>')
+  .replace(/(\[\[[^\]]+\]\])(?!")/g, '<mark>$1</mark>');
+---
+<Base page="home" description={site.description}>
+  <section class="hero grid" aria-labelledby="hero-title">
+    <Frontmatter class="hero__fm" rows={[
+      ['title', 'llm-wiki'],
+      ['category', 'open source, MIT'],
+      ['requires', 'Python 3.10+, nothing else'],
+      ['lifecycle', 'draft'],
+    ]} />
+    <div class="hero__graph-slot">
+      <div class="hero__graph-static li-inline"><LinkIndex current="home" labels /></div>
+    </div>
+    <h1 class="hero__title" id="hero-title" data-split="lines" data-intro>
+      <span class="line">Your notes,</span>
+      <span class="line">compiled.</span>
+    </h1>
+    <p class="hero__lede">{home.lede}</p>
+    <div class="hero__act" data-reveal="up" data-intro data-delay="0.35">
+      <Wl href={hrefOf('architecture')} open class="hero__cta">Read the guide</Wl>
+      <div class="install">
+        <div class="install__head">
+          <span class="mono muted">install</span>
+          <button class="btn" type="button" data-copy="install-cmd"><span class="btn__fill" aria-hidden="true"></span><span data-copy-label>Copy</span></button>
+        </div>
+        <pre id="install-cmd" tabindex="0" aria-label="Install commands">{site.install.map((l) => <><span class="prompt">$ </span>{l}{'\n'}</>)}</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec grid" aria-labelledby="compiled">
+    <h2 class="sec-title" id="compiled"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Compiled once, not retrieved every time</span></h2>
+    <p class="statement" data-split="lines">
+      Most tools retrieve at question time: you ask, a retriever grabs some chunks, a model improvises, and <em>nothing is learned</em>. llm-wiki compiles once, when a source arrives. Your sources are the source code, your agents are the compiler, and the wiki is the build artifact.
+    </p>
+  </section>
+
+  <section class="sec sec--tight grid" aria-labelledby="page">
+    <h2 class="sec-title" id="page"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">What an agent leaves behind</span></h2>
+    <p class="sec-sub">One page from the demo vault, unedited. Every page an agent writes looks like this, and you can open it in any text editor.</p>
+    <figure class="specimen" data-reveal="up">
+      <figcaption class="specimen__head mono"><span>{home.specimen.file.split('/').pop()}</span><span>{home.specimen.file.split('/').slice(0, -1).join('/')}/</span></figcaption>
+      <pre set:html={specimenHtml}></pre>
+    </figure>
+    <ul class="notes">
+      {home.specimen.notes.map((n, i) => (
+        <li data-reveal="up" data-delay={String(i * 0.06)}><code>{n.key}</code><p>{n.text}</p></li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="sec grid" aria-labelledby="rag">
+    <h2 class="sec-title" id="rag"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Same documents, different artifact</span></h2>
+    <div class="spec table-scroll" tabindex="0" role="region" aria-labelledby="rag">
+      <table>
+        <thead><tr><th scope="col">Question</th><th scope="col">Typical RAG or notes chatbot</th><th scope="col">llm-wiki</th></tr></thead>
+        <tbody>
+          {home.rag.map(([q, a, b]) => <tr><th scope="row">{q}</th><td data-label="RAG">{a}</td><td data-label="llm-wiki">{b}</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec grid" aria-labelledby="done">
+    <h2 class="sec-title" id="done"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Done means six checks pass</span></h2>
+    <p class="sec-sub">Agents do not grade their own homework. An operation is complete only when all six hold, copied here from the vault’s <code>AGENTS.md</code>.</p>
+    <ol class="done" data-done>
+      {done.map((d) => (
+        <li><span class="done__box" aria-hidden="true">[ ]</span><span class="done__text" set:html={inline(d.md.split(/\.\s/)[0].replace(/\.$/, '') + '.')} /><span class="done__n">done.{d.n}</span></li>
+      ))}
+    </ol>
+    <p class="done-gate">
+      The last word goes to ordinary code: <code>llm-wiki doctor</code> passes and <code>llm-wiki lint</code> reports zero fail-level findings. The {laws.length} laws behind it are on <a class="il" href={hrefOf('laws')}>the laws page</a>.
+    </p>
+  </section>
+
+  <section class="sec sec--airy grid" aria-labelledby="graph-title">
+    <h2 class="sec-title" id="graph-title"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">The graph weaves itself</span></h2>
+    <figure class="vault" data-vault set:html={vaultSvg} />
+    <div class="vault-cap">
+      <p class="vault-cap__n"><span data-vault-links>{vaultCounts.links}</span><span>links between {vaultCounts.pages} pages of a real vault</span></p>
+      <p>Every edge is a wikilink an agent wrote, readable as plain markdown. Say “link my pages” and <code>cross-linker</code> writes the links that should already exist. <code>graph-query</code> answers from this index without reading a page body.</p>
+      <p>The graph at the top of this page is the same idea applied to this site: {lint.pages} pages and the links between them. On a wide screen it follows you into the corner and draws the edge of any link you point at.</p>
+    </div>
+  </section>
+
+  <section class="sec grid" aria-labelledby="guide">
+    <h2 class="sec-title" id="guide"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">The guide, in six pages</span></h2>
+    <ol class="toc">
+      {guideOrder.map((g, i) => (
+        <li data-reveal="up" data-delay={String(i * 0.05)}>
+          <a href={hrefOf(g)} class="toc__link">
+            <span class="toc__n mono">{String(i + 1).padStart(2, '0')}</span>
+            <span class="toc__t"><span class="wl__b" aria-hidden="true">[[</span><span class="wl__t">{nodeOf(g).title.split(":")[0]}</span><span class="wl__b" aria-hidden="true">]]</span></span>
+            <span class="toc__s">{guideSummary(g)}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="sec grid" aria-labelledby="skills">
+    <h2 class="sec-title" id="skills"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">{skillCount} skills and a CLI that does the counting</span></h2>
+    <p class="sec-sub">Skills are plain <code>SKILL.md</code> files you can read and fork. The CLI is Python’s standard library only and handles every question that has an exact answer.</p>
+    <div class="skills">
+      {skillGroups.map((g) => (
+        <section data-reveal="up">
+          <h3>{g.name}<span>{g.skills.length}</span></h3>
+          <p>{g.note}</p>
+          <ul>{g.skills.map((s) => <li>{s}</li>)}</ul>
+        </section>
+      ))}
+    </div>
+    <div class="cli">
+      <h3>The CLI</h3>
+      <dl>
+        {home.cli.map(([c, d]) => <><dt>{c}</dt><dd>{d}</dd></>)}
+      </dl>
+      <p class="cli__more">Every command, with options, is in <a class="il" href={hrefOf('configuration')}>configuration</a>.</p>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,44 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Frontmatter from '../../components/Frontmatter.astro';
+import LinkIndex from '../../components/LinkIndex.astro';
+import Wl from '../../components/Wl.astro';
+import { guideOrder, guideSummary, hrefOf, nodeOf, edges } from '../../lib/vault';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('guide');
+  return pages.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const slug = entry.id;
+const i = guideOrder.indexOf(slug);
+const prev = guideOrder[(i - 1 + guideOrder.length) % guideOrder.length];
+const next = guideOrder[(i + 1) % guideOrder.length];
+const title = nodeOf(slug).title;
+const linked = edges.filter((e) => e.includes(slug)).map((e) => (e[0] === slug ? e[1] : e[0]));
+---
+<Base page={slug} title={title} description={`${guideSummary(slug)} Part ${i + 1} of the llm-wiki guide.`}>
+  <header class="doc-head grid">
+    <Frontmatter rows={[
+      ['category', `guide, part ${i + 1} of ${guideOrder.length}`],
+      ['sources', `guide/${slug}.md`],
+      ['links', `${linked.length} pages`],
+    ]} />
+    <h1 class="doc-title" data-split="lines" data-intro>{title}</h1>
+  </header>
+  <div class="grid">
+    <article class="prose">
+      <Content />
+    </article>
+    <nav class="pager" aria-label="Guide pages">
+      <span><small>previous</small><Wl href={hrefOf(prev)}>{nodeOf(prev).title.split(':')[0]}</Wl></span>
+      <span><small>next</small><Wl href={hrefOf(next)}>{nodeOf(next).title.split(':')[0]}</Wl></span>
+    </nav>
+    <div class="li-foot">
+      <p class="mono muted">where this page sits</p>
+      <div class="li-inline"><LinkIndex current={slug} labels /></div>
+    </div>
+  </div>
+</Base>
