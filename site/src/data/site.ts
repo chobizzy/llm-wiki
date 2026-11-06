@@ -9,7 +9,7 @@ export const site = {
   repo: 'https://github.com/chobizzy/llm-wiki',
   tagline: 'Your notes, compiled.',
   description:
-    'A knowledge base your AI agents maintain under written law. 31 skills, a zero-dependency Python CLI and an Obsidian vault governed by an 11-law constitution.',
+    'An AI assistant turns the documents you give it into linked notes you can read in Obsidian. It follows a written rulebook, and a checker confirms the work.',
   install: [
     'git clone https://github.com/chobizzy/llm-wiki ~/Projects/llm-wiki',
     'pip install -e ~/Projects/llm-wiki',
@@ -18,33 +18,33 @@ export const site = {
 };
 
 export const home = {
-  lede: 'A knowledge base your AI agents maintain under written law. Not a chatbot, not a vector store: a folder of linked markdown pages you can read.',
+  lede: 'An AI assistant turns your documents into linked notes you can open and read. It follows a written rulebook, and a separate checker confirms the work.',
   statement:
-    'Most tools retrieve at question time: you ask, a retriever grabs some chunks, a model improvises, and nothing is learned. llm-wiki compiles once, when a source arrives. Your sources are the source code, your agents are the compiler, and the wiki is the build artifact.',
+    'Most AI tools reread your files every time you ask, and forget the answer afterward. llm-wiki does the reading once. Add a document and your assistant (Claude Code or Hermes) turns it into linked notes in Obsidian, so the knowledge is written down for next time.',
   specimen: {
     file: 'presets/demo/why-agents-need-a-constitution.md',
     notes: [
-      { key: 'lifecycle: draft', text: 'Agents can only ever write draft. Promoting a page to reviewed is a line you edit by hand (law 10).' },
-      { key: 'provenance', text: 'How much of the page came from sources, how much the model concluded, how much the sources dispute.' },
-      { key: '^[inferred]', text: 'Ends any sentence the model concluded on its own. An unmarked sentence must paraphrase a real source (law 5).' },
-      { key: '[[wikilinks]]', text: 'Written between related pages. They are the edges in the graph further down this page.' },
+      { key: 'lifecycle: draft', text: 'The AI can only ever mark a page draft. Marking it reviewed is a line you change by hand (law 10).' },
+      { key: 'provenance', text: 'How much of the page came from sources, how much the AI concluded, how much the sources dispute.' },
+      { key: '^[inferred]', text: 'Ends any sentence the AI concluded on its own. Every unmarked sentence must restate a real source (law 5).' },
+      { key: '[[wikilinks]]', text: 'Links the AI writes between related pages. They are the lines in the graph further down.' },
     ],
   },
   rag: [
-    ['When work happens', 'At query time, every time', 'Once, at ingest. Reused after that'],
-    ['What you get', 'An answer you cannot inspect', 'Pages you can read, edit and diff'],
-    ['Storage', 'Vector DB, embeddings, an index', 'Plain files in a git repo'],
-    ['Duplicates', 'Near-duplicate chunks pile up', 'One concept, one page (law 6)'],
-    ['Hallucination', 'Invisible, mixed into prose', 'Marked inline: ^[inferred], ^[ambiguous]'],
-    ['Trust', '“The model said so”', 'doctor and lint must pass'],
-    ['Lock-in', 'Rebuild when the tool dies', 'A folder of markdown. Nothing to migrate'],
-    ['API keys', 'Required', 'None. Your agent already has model access'],
+    ['When work happens', 'Every time you ask a question', 'Once, when you add a document'],
+    ['What you get', 'An answer you cannot inspect', 'Pages you can read and edit'],
+    ['Storage', 'A search database of your files', 'Plain files in a git repo'],
+    ['Duplicates', 'Near-identical snippets pile up', 'One idea, one page (law 6)'],
+    ['Hallucination', 'Invisible, mixed into the answer', 'Marked: ^[inferred], ^[ambiguous]'],
+    ['Trust', '“The AI said so”', 'doctor and lint checks pass'],
+    ['Lock-in', 'Rebuild if the tool shuts down', 'Just text files. Nothing to convert'],
+    ['API keys', 'Required', 'None. Uses your existing assistant'],
   ],
   cli: [
     ['llm-wiki init <path>', 'Create a vault from a pack, roles and folders of your own'],
     ['llm-wiki setup --vault <path>', 'Link the skills into your agents and write the global config'],
     ['llm-wiki doctor', 'Health check: config, vault shape and layout, skill installs'],
-    ['llm-wiki lint <path> --json', 'Frontmatter, broken links, lifecycle, duplicates, orphans'],
+    ['llm-wiki lint <path> --json', 'Page metadata, broken links, lifecycle, duplicates, orphans'],
     ['llm-wiki graph-query', 'Answer structural questions from the link index alone'],
     ['llm-wiki layout', 'Show the vault’s folders and which one plays each role'],
   ],

@@ -19,7 +19,7 @@ const specimenHtml = esc(specimen)
     <Frontmatter class="hero__fm" rows={[
       ['title', 'llm-wiki'],
       ['category', 'open source, MIT'],
-      ['requires', 'Python 3.10+, nothing else'],
+      ['requires', 'Python 3.10+, an AI agent'],
       ['lifecycle', 'draft'],
     ]} />
     <div class="hero__graph-slot">
@@ -45,13 +45,13 @@ const specimenHtml = esc(specimen)
   <section class="sec grid" aria-labelledby="compiled">
     <h2 class="sec-title" id="compiled"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Compiled once, not retrieved every time</span></h2>
     <p class="statement" data-split="lines">
-      Most tools retrieve at question time: you ask, a retriever grabs some chunks, a model improvises, and <em>nothing is learned</em>. llm-wiki compiles once, when a source arrives. Your sources are the source code, your agents are the compiler, and the wiki is the build artifact.
+      Most AI tools reread your files every time you ask, and <em>forget the answer afterward</em>. llm-wiki does the reading once. Add a document and your assistant (Claude Code or Hermes) turns it into linked notes in Obsidian, so the knowledge is written down for next time.
     </p>
   </section>
 
   <section class="sec sec--tight grid" aria-labelledby="page">
     <h2 class="sec-title" id="page"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">What an agent leaves behind</span></h2>
-    <p class="sec-sub">One page from the demo vault, unedited. Every page an agent writes looks like this, and you can open it in any text editor.</p>
+    <p class="sec-sub">One unedited page from the demo vault (a folder of notes). Every page the AI writes looks like this and opens in any editor.</p>
     <figure class="specimen" data-reveal="up">
       <figcaption class="specimen__head mono"><span>{home.specimen.file.split('/').pop()}</span><span>{home.specimen.file.split('/').slice(0, -1).join('/')}/</span></figcaption>
       <pre set:html={specimenHtml}></pre>
@@ -64,10 +64,10 @@ const specimenHtml = esc(specimen)
   </section>
 
   <section class="sec grid" aria-labelledby="rag">
-    <h2 class="sec-title" id="rag"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Same documents, different artifact</span></h2>
+    <h2 class="sec-title" id="rag"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">Same documents, different result</span></h2>
     <div class="spec table-scroll" tabindex="0" role="region" aria-labelledby="rag">
       <table>
-        <thead><tr><th scope="col">Question</th><th scope="col">Typical RAG or notes chatbot</th><th scope="col">llm-wiki</th></tr></thead>
+        <thead><tr><th scope="col">Question</th><th scope="col">“Chat with your files” (RAG)</th><th scope="col">llm-wiki</th></tr></thead>
         <tbody>
           {home.rag.map(([q, a, b]) => <tr><th scope="row">{q}</th><td data-label="RAG">{a}</td><td data-label="llm-wiki">{b}</td></tr>)}
         </tbody>
@@ -93,8 +93,8 @@ const specimenHtml = esc(specimen)
     <figure class="vault" data-vault set:html={vaultSvg} />
     <div class="vault-cap">
       <p class="vault-cap__n"><span data-vault-links>{vaultCounts.links}</span><span>links between {vaultCounts.pages} pages of a real vault</span></p>
-      <p>Every edge is a wikilink an agent wrote, readable as plain markdown. Say “link my pages” and <code>cross-linker</code> writes the links that should already exist. <code>graph-query</code> answers from this index without reading a page body.</p>
-      <p>The graph at the top of this page is the same idea applied to this site: {lint.pages} pages and the links between them. On a wide screen it follows you into the corner and draws the edge of any link you point at.</p>
+      <p>Lines are links the AI wrote. Say “ingest my inbox” and a paper in _inbox/ becomes a page per idea, linked to your notes. Say “link my pages” and <code>cross-linker</code> adds missing links. <code>graph-query</code> answers from links alone.</p>
+      <p>The graph at the top of this page is the same idea applied to this site: {lint.pages} pages and the links between them. On a wide screen it follows you into the corner and draws the line of any link you point at.</p>
     </div>
   </section>
 
@@ -115,7 +115,7 @@ const specimenHtml = esc(specimen)
 
   <section class="sec grid" aria-labelledby="skills">
     <h2 class="sec-title" id="skills"><span class="md-hash" aria-hidden="true" data-reveal="fade">##</span><span class="sec-title__t" data-split="lines">{skillCount} skills and a CLI that does the counting</span></h2>
-    <p class="sec-sub">Skills are plain <code>SKILL.md</code> files you can read and fork. The CLI is Python’s standard library only and handles every question that has an exact answer.</p>
+    <p class="sec-sub">Skills are plain <code>SKILL.md</code> files you can read and fork. The CLI, a command-line tool in plain Python, handles every question with an exact answer.</p>
     <div class="skills">
       {skillGroups.map((g) => (
         <section data-reveal="up">
